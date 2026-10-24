@@ -94,12 +94,11 @@ function setupLevel() {
 function buildBoard(count) {
   els.grid.innerHTML = '';
   
-  // Get the exact available space
+  // Get the exact available space (should be huge now)
   const containerRect = els.gridContainer.getBoundingClientRect();
   
-  // Use 98% of the available height/width to make the grid as large as possible.
-  // We subtract 10 to account for any minor border/browser quirks.
-  const boardSize = Math.min(containerRect.width, containerRect.height - 10) * 0.98;
+  // Use 100% of the smallest dimension
+  const boardSize = Math.min(containerRect.width, containerRect.height) * 0.98;
   
   els.grid.style.width = `${boardSize}px`;
   els.grid.style.height = `${boardSize}px`;
