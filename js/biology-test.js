@@ -11,8 +11,7 @@ const state = {
   currentQuestion: null,
   currentConcept: null,
   reviewQueue: [],
-  isAnswered: false,
-  tempData: null
+  isAnswered: false
 };
 
 const els = {};
@@ -50,7 +49,6 @@ export function resetToIntro() {
   state.wrongCount = 0;
   state.reviewQueue = [];
   state.isAnswered = false;
-  state.tempData = null;
 
   els.view.classList.add('is-active');
   updateStats();
@@ -67,8 +65,6 @@ function nextQuestion() {
   if (state.streak >= TARGET_STREAK) {
     els.prompt.textContent = "TEST PASSED";
     els.content.innerHTML = `<p style="font-size:1.2rem; color:var(--text-muted); text-align:center;">You achieved a perfect streak of ${TARGET_STREAK}.</p>`;
-    els.feedback.textContent = "";
-    els.feedbackRow.innerHTML = '';
     els.feedbackRow.style.display = 'none';
     
     els.actions.innerHTML = '';
@@ -84,10 +80,11 @@ function nextQuestion() {
   }
 
   state.isAnswered = false;
+  els.feedbackRow.style.display = 'none';
+  els.feedbackRow.innerHTML = `<div class="bt-feedback" id="btFeedback"></div>`;
+  els.feedback = document.getElementById('btFeedback');
   els.feedback.textContent = "";
   els.feedback.className = "bt-feedback";
-  els.feedbackRow.innerHTML = ''; 
-  els.feedbackRow.style.display = 'none'; 
   els.actions.innerHTML = "";
 
   if (state.reviewQueue.length > 0) {
@@ -176,7 +173,7 @@ function renderTF(q) {
 
 function handleTFSelection(val, q, wrapper) {
   if (val !== q.answer) {
-    markWrong(wrapper.querySelectorAll('.bt-option-btn')[val ? 0 : 1], "Incorrect. The correct answer is False. " + q.explanation);
+    markWrong(wrapper.querySelectorAll('.bt-option-btn')[val ? 0 : 1], `Incorrect. The answer is False. ${q.explanation}`);
     return;
   }
   
@@ -391,11 +388,12 @@ function markCorrect(explanation) {
   
   els.feedbackRow.style.display = 'flex';
   els.feedback.textContent = `Correct. ${explanation || ''}`;
-  els.feedback.classList.add("is-success");
+  els.feedback.className = "bt-feedback is-success";
   
+  // Give user 3.5 seconds to read the explanation
   setTimeout(() => {
     nextQuestion();
-  }, 2500); // Gives the user time to read the explanation
+  }, 3500); 
 }
 
 function markWrong(element, msg) {
@@ -410,7 +408,7 @@ function markWrong(element, msg) {
   
   els.feedbackRow.style.display = 'flex';
   els.feedback.textContent = msg;
-  els.feedback.classList.add("is-error");
+  els.feedback.className = "bt-feedback is-error";
 
   state.reviewQueue.push(state.currentConcept);
 
