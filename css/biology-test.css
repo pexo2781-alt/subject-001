@@ -25,7 +25,7 @@
   padding: 1rem;
 }
 
-/* Header / Stats */
+/* Header / Stats (Only used in Question Stage) */
 .bt-header {
   display: flex;
   justify-content: space-between;
@@ -215,38 +215,50 @@
 }
 
 /* =========================================
-   FEEDBACK STAGE
+   FEEDBACK STAGE (Centered & Bigger)
    ========================================= */
+#btStageFeedback .bt-view {
+  align-items: center;
+  justify-content: center;
+}
+
 .bt-feedback-card {
   background: var(--panel-bg);
   border: 1px solid var(--text-dim);
-  padding: 3rem 2rem;
+  padding: 4rem 3rem;
   width: 100%;
-  max-width: 600px;
+  max-width: 800px; /* Increased from 600px */
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-  box-shadow: 0 0 40px rgba(var(--text-rgb), 0.05);
+  gap: 2rem;
+  box-shadow: 0 0 60px rgba(var(--text-rgb), 0.08);
+  animation: scaleIn 0.3s cubic-bezier(0.2, 0.9, 0.4, 1);
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .bt-feedback-title {
   font-family: var(--font-accent);
-  font-size: clamp(2rem, 4vw, 2.5rem);
+  font-size: clamp(2.5rem, 5vw, 3.5rem); /* Much bigger */
   font-weight: 700;
   letter-spacing: -0.02em;
+  margin: 0;
 }
 
-.bt-feedback-title.is-correct { color: var(--accent); text-shadow: 0 0 20px rgba(var(--accent-rgb), 0.4); }
-.bt-feedback-title.is-wrong { color: #ff5555; text-shadow: 0 0 20px rgba(255, 85, 85, 0.4); }
+.bt-feedback-title.is-correct { color: var(--accent); text-shadow: 0 0 30px rgba(var(--accent-rgb), 0.4); }
+.bt-feedback-title.is-wrong { color: #ff5555; text-shadow: 0 0 30px rgba(255, 85, 85, 0.4); }
 
 .bt-feedback-text {
   font-family: var(--font-main);
-  font-size: 1rem;
+  font-size: 1.15rem; /* Increased from 1rem */
   color: var(--text);
-  line-height: 1.6;
-  max-width: 50ch;
+  line-height: 1.7;
+  max-width: 60ch;
 }
 
 .bt-feedback-text strong {
