@@ -87,18 +87,23 @@
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
         </button>
+        
+        <!-- Main Tabs -->
         <nav class="domain-nav" id="domainNav">
-          <button class="domain-tab is-active" data-domain="select" type="button">
+          <button class="domain-tab is-active" data-tab="domain" type="button">
             <span class="domain-tab-label">Domain</span>
-            <span class="domain-tab-caret">▾</span>
+          </button>
+          <button class="domain-tab" data-tab="degree" type="button">
+            <span class="domain-tab-label">Degree</span>
           </button>
         </nav>
+
         <button class="lab-signout" id="signOutBtn" title="Sign out">Sign out</button>
       </div>
 
       <div class="lab-content">
-        <!-- Domain picker -->
-        <div class="domain-picker is-active" id="domainPicker">
+        <!-- Domain View -->
+        <div class="domain-picker is-active" id="view-domain">
           <div class="domain-picker-inner">
             <span class="domain-kicker">// SELECT DOMAIN</span>
             <h2 class="domain-heading">Choose your field.</h2>
@@ -123,10 +128,36 @@
           </div>
         </div>
 
-        <!-- Domain drills -->
-        <div class="domain-drills" id="domainDrills" data-domain-panel="mental">
+        <!-- Degree View -->
+        <div class="domain-picker" id="view-degree">
+          <div class="domain-picker-inner">
+            <span class="domain-kicker">// SELECT MODULE</span>
+            <h2 class="domain-heading">Your Degree.</h2>
+            <p class="domain-sub">Targeted retention drills for your university modules.</p>
+            <div class="domain-list">
+              <button class="domain-choice" data-degree="biology" type="button">
+                <span class="domain-choice-num">01</span>
+                <span class="domain-choice-name">Molecular Biology & Genetics</span>
+                <span class="domain-choice-tag">Ready</span>
+              </button>
+              <button class="domain-choice" type="button" disabled>
+                <span class="domain-choice-num">02</span>
+                <span class="domain-choice-name">Biochemistry</span>
+                <span class="domain-choice-tag">N/A</span>
+              </button>
+              <button class="domain-choice" type="button" disabled>
+                <span class="domain-choice-num">03</span>
+                <span class="domain-choice-name">Cell Biology</span>
+                <span class="domain-choice-tag">N/A</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Domain Drills (Mental) -->
+        <div class="domain-drills" id="drills-mental">
           <div class="domain-drills-header">
-            <button class="domain-back" id="domainBackBtn" type="button">← Back</button>
+            <button class="domain-back" id="back-mental" type="button">← Back</button>
             <span class="domain-drills-kicker">// MENTAL // DRILLS</span>
           </div>
           <div class="drill-grid">
@@ -153,6 +184,40 @@
               <span class="drill-card-name">Chimp Test</span>
               <span class="drill-card-desc">Are you smarter than a chimpanzee?</span>
               <span class="drill-card-status">Ready</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Degree Drills (Biology) -->
+        <div class="domain-drills" id="drills-degree">
+          <div class="domain-drills-header">
+            <button class="domain-back" id="back-degree" type="button">← Back</button>
+            <span class="domain-drills-kicker">// BIOLOGY // GENETICS</span>
+          </div>
+          <div class="drill-grid">
+            <button class="drill-card is-ready" type="button">
+              <span class="drill-card-num">01</span>
+              <span class="drill-card-name">The Central Dogma</span>
+              <span class="drill-card-desc">DNA to RNA to Protein. Test your recall.</span>
+              <span class="drill-card-status">Ready</span>
+            </button>
+            <button class="drill-card is-ready" type="button">
+              <span class="drill-card-num">02</span>
+              <span class="drill-card-name">DNA Replication</span>
+              <span class="drill-card-desc">Key enzymes and leading/lagging strands.</span>
+              <span class="drill-card-status">Ready</span>
+            </button>
+            <button class="drill-card is-locked" type="button" disabled>
+              <span class="drill-card-num">03</span>
+              <span class="drill-card-name">Transcription</span>
+              <span class="drill-card-desc">—</span>
+              <span class="drill-card-status">N/A</span>
+            </button>
+            <button class="drill-card is-locked" type="button" disabled>
+              <span class="drill-card-num">04</span>
+              <span class="drill-card-name">Translation</span>
+              <span class="drill-card-desc">—</span>
+              <span class="drill-card-status">N/A</span>
             </button>
           </div>
         </div>
@@ -301,43 +366,15 @@
           <div class="ct-stage is-active" id="ctStageIntro">
             <div class="ct-intro">
               <div class="ct-logo" aria-hidden="true">
-                <!-- Mathematically precise monkey SVG matching the reference -->
                 <svg class="monkey-logo" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" aria-label="Monkey logo" role="img">
-                  <!-- Ears -->
                   <circle class="outline" cx="115" cy="180" r="27"/>
                   <circle class="outline" cx="245" cy="180" r="27"/>
-
-                  <!-- Inner ears -->
                   <circle cx="115" cy="180" r="15" fill="var(--bg)"/>
                   <circle cx="245" cy="180" r="15" fill="var(--bg)"/>
-
-                  <!-- Main head -->
                   <circle class="outline" cx="180" cy="180" r="64"/>
-
-                  <!-- Face and muzzle -->
-                  <path
-                    class="face"
-                    d="
-                      M 180 158
-                      C 173 147, 164 143, 155 146
-                      C 142 150, 134 161, 134 174
-                      C 134 186, 141 195, 150 201
-                      C 149 216, 162 228, 180 228
-                      C 198 228, 211 216, 210 201
-                      C 219 195, 226 186, 226 174
-                      C 226 161, 218 150, 205 146
-                      C 196 143, 187 147, 180 158
-                      Z
-                    "
-                  />
-
-                  <!-- Left eye -->
+                  <path class="face" d="M 180 158 C 173 147, 164 143, 155 146 C 142 150, 134 161, 134 174 C 134 186, 141 195, 150 201 C 149 216, 162 228, 180 228 C 198 228, 211 216, 210 201 C 219 195, 226 186, 226 174 C 226 161, 218 150, 205 146 C 196 143, 187 147, 180 158 Z"/>
                   <circle class="eye" cx="159" cy="174" r="11"/>
-
-                  <!-- Right eye -->
                   <circle class="eye" cx="201" cy="174" r="11"/>
-
-                  <!-- Nose -->
                   <ellipse class="nose" cx="180" cy="194" rx="10" ry="5"/>
                 </svg>
               </div>
@@ -437,7 +474,7 @@
       </section>
     </div>
 
-    <div class="lab-footer" id="labFooter">LAB · SUBJECT 001 · v0.38</div>
+    <div class="lab-footer" id="labFooter">LAB · SUBJECT 001 · v0.39</div>
   </div>
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
