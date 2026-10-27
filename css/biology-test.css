@@ -2,6 +2,19 @@
    Biology Test Engine
    ============================================================ */
 
+/* Stage Management */
+.bt-stage {
+  display: none !important;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  animation: fadeSlideUp 0.3s ease;
+}
+.bt-stage.is-active {
+  display: flex !important;
+}
+
 .bt-view {
   display: flex;
   flex-direction: column;
@@ -76,10 +89,7 @@
   outline: none;
   transition: border-color var(--transition);
 }
-
-.bt-input:focus {
-  border-bottom-color: var(--accent);
-}
+.bt-input:focus { border-bottom-color: var(--accent); }
 
 /* MCQ */
 .bt-options {
@@ -102,23 +112,9 @@
   border-radius: 0;
   transition: all var(--transition);
 }
-
-.bt-option-btn:hover {
-  border-color: var(--accent);
-  background: var(--accent-dim);
-}
-
-.bt-option-btn.is-correct {
-  background: var(--accent);
-  color: var(--bg);
-  border-color: var(--accent);
-}
-
-.bt-option-btn.is-wrong {
-  background: #ff3333;
-  color: #fff;
-  border-color: #ff3333;
-}
+.bt-option-btn:hover { border-color: var(--accent); background: var(--accent-dim); }
+.bt-option-btn.is-correct { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.bt-option-btn.is-wrong { background: #ff3333; color: #fff; border-color: #ff3333; }
 
 /* True / False */
 .bt-tf-row {
@@ -126,7 +122,6 @@
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
-
 .bt-tf-row .bt-option-btn {
   text-align: center;
   font-family: var(--font-accent);
@@ -151,7 +146,6 @@
   width: 100%;
   max-width: 600px;
 }
-
 .bt-seq-item {
   background: transparent;
   border: 1px solid var(--text-dim);
@@ -165,35 +159,15 @@
   cursor: pointer;
   user-select: none;
 }
-
-.bt-seq-item:hover {
-  border-color: var(--accent-dim);
-  background: rgba(var(--accent-rgb), 0.02);
-}
-
+.bt-seq-item:hover { border-color: var(--accent-dim); background: rgba(var(--accent-rgb), 0.02); }
 .bt-seq-item.is-selected {
   border-color: var(--accent);
   background: var(--accent-dim);
   box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.15);
 }
-
-.bt-seq-num {
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  font-weight: bold;
-  min-width: 1.5rem;
-}
-
-.bt-seq-text {
-  flex: 1;
-}
-
-.bt-seq-arrows {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
+.bt-seq-num { font-family: var(--font-mono); color: var(--text-muted); font-weight: bold; min-width: 1.5rem; }
+.bt-seq-text { flex: 1; }
+.bt-seq-arrows { display: flex; flex-direction: column; gap: 2px; }
 .bt-seq-arrow {
   background: transparent;
   border: none;
@@ -203,10 +177,7 @@
   font-size: 0.8rem;
   transition: color var(--transition);
 }
-
-.bt-seq-arrow:hover {
-  color: var(--accent);
-}
+.bt-seq-arrow:hover { color: var(--accent); }
 
 /* Match */
 .bt-match-container {
@@ -216,14 +187,7 @@
   max-width: 700px;
   justify-content: center;
 }
-
-.bt-match-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  flex: 1;
-}
-
+.bt-match-col { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
 .bt-match-btn {
   background: transparent;
   border: 1px solid var(--text-dim);
@@ -234,76 +198,58 @@
   cursor: pointer;
   transition: all var(--transition);
 }
+.bt-match-btn.is-selected { border-color: var(--accent); background: var(--accent-dim); }
+.bt-match-btn.is-matched { border-color: var(--accent); color: var(--accent); opacity: 0.5; pointer-events: none; }
 
-.bt-match-btn.is-selected {
-  border-color: var(--accent);
-  background: var(--accent-dim);
-}
-
-.bt-match-btn.is-matched {
-  border-color: var(--accent);
-  color: var(--accent);
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Feedback / Buttons */
+/* Buttons */
 .bt-actions {
   display: flex;
   justify-content: center;
   margin-top: 1rem;
   width: 100%;
 }
-
 .bt-submit-btn {
   min-width: 200px;
   padding: 0.75rem 2rem;
   font-size: 0.85rem;
 }
 
-/* Feedback Row - Made prominent and visible */
-.bt-feedback-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  min-height: 2rem;
-  width: 100%;
-  max-width: 700px;
-  padding: 1rem;
-  background: rgba(var(--text-rgb), 0.02);
+/* =========================================
+   FEEDBACK STAGE
+   ========================================= */
+.bt-feedback-card {
+  background: var(--panel-bg);
   border: 1px solid var(--text-dim);
-  animation: fadeSlideUp 0.3s ease;
-}
-
-.bt-feedback {
-  font-family: var(--font-mono);
-  font-size: 0.95rem;
+  padding: 3rem 2rem;
+  width: 100%;
+  max-width: 600px;
   text-align: center;
-  line-height: 1.5;
-}
-
-.bt-feedback.is-error { color: #ff5555; }
-.bt-feedback.is-success { color: var(--accent); }
-
-/* Next Arrow Button */
-.bt-next-arrow {
-  background: transparent;
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  width: 32px;
-  height: 32px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition);
-  font-size: 1.2rem;
-  flex-shrink: 0;
+  gap: 1.5rem;
+  box-shadow: 0 0 40px rgba(var(--text-rgb), 0.05);
 }
 
-.bt-next-arrow:hover {
-  background: var(--accent);
-  color: var(--bg);
+.bt-feedback-title {
+  font-family: var(--font-accent);
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.bt-feedback-title.is-correct { color: var(--accent); text-shadow: 0 0 20px rgba(var(--accent-rgb), 0.4); }
+.bt-feedback-title.is-wrong { color: #ff5555; text-shadow: 0 0 20px rgba(255, 85, 85, 0.4); }
+
+.bt-feedback-text {
+  font-family: var(--font-main);
+  font-size: 1rem;
+  color: var(--text);
+  line-height: 1.6;
+  max-width: 50ch;
+}
+
+.bt-feedback-text strong {
+  color: var(--accent);
+  font-weight: 600;
 }
