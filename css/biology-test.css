@@ -1,0 +1,242 @@
+/* ============================================================
+   Biology Test Engine
+   ============================================================ */
+
+.bt-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Header / Stats */
+.bt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px dashed var(--text-dim);
+  margin-bottom: 2rem;
+  flex-shrink: 0;
+}
+
+.bt-stat-group {
+  display: flex;
+  gap: 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.bt-stat-val {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Question Area */
+.bt-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.bt-prompt {
+  font-family: var(--font-accent);
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+  font-weight: 500;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.4;
+  margin-bottom: 2rem;
+  max-width: 90%;
+}
+
+/* Typed & Fill */
+.bt-input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--text-dim);
+  padding: 1rem 0;
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+  font-family: var(--font-accent);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--accent);
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.bt-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+/* MCQ */
+.bt-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.bt-option-btn {
+  background: transparent;
+  border: 1px solid var(--text-dim);
+  color: var(--text);
+  font-family: var(--font-main);
+  font-size: 1rem;
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 0;
+  transition: all var(--transition);
+}
+
+.bt-option-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.bt-option-btn.is-correct {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+.bt-option-btn.is-wrong {
+  background: #ff3333;
+  color: #fff;
+  border-color: #ff3333;
+}
+
+/* True / False */
+.bt-tf-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.bt-tf-row .bt-option-btn {
+  text-align: center;
+  font-family: var(--font-accent);
+  font-size: 1.2rem;
+  padding: 1rem 3rem;
+}
+
+.bt-reason-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 600px;
+  animation: fadeSlideUp 0.3s ease;
+}
+
+/* Sequence */
+.bt-seq-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.bt-seq-item {
+  background: transparent;
+  border: 1px solid var(--text-dim);
+  padding: 0.8rem 1rem;
+  font-family: var(--font-main);
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.bt-seq-item:active {
+  cursor: grabbing;
+}
+
+.bt-seq-item.dragging {
+  opacity: 0.5;
+  background: var(--accent-dim);
+}
+
+.bt-seq-num {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-weight: bold;
+}
+
+/* Match */
+.bt-match-container {
+  display: flex;
+  gap: 2rem;
+  width: 100%;
+  max-width: 700px;
+  justify-content: center;
+}
+
+.bt-match-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.bt-match-btn {
+  background: transparent;
+  border: 1px solid var(--text-dim);
+  padding: 1rem;
+  font-family: var(--font-main);
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.bt-match-btn.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.bt-match-btn.is-matched {
+  border-color: var(--accent);
+  color: var(--accent);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Feedback / Buttons */
+.bt-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  width: 100%;
+}
+
+.bt-submit-btn {
+  min-width: 200px;
+  padding: 1rem 2rem;
+  font-size: 0.9rem;
+}
+
+.bt-feedback {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  text-align: center;
+  min-height: 1.5rem;
+}
+
+.bt-feedback.is-error { color: #ff5555; }
+.bt-feedback.is-success { color: var(--accent); }
