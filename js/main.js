@@ -7,6 +7,7 @@ import { initNumberMemory } from './number-memory.js';
 import { initSequenceMemory } from './sequence-memory.js';
 import { initVisualMemory } from './visual-memory.js';
 import { initChimpTest } from './chimp-test.js';
+import { initBiologyTest } from './biology-test.js';
 
 const views = {
   landing: document.getElementById('view-landing'),
@@ -53,6 +54,7 @@ async function boot() {
   initSequenceMemory();
   initVisualMemory();
   initChimpTest();
+  initBiologyTest();
 
   try {
     await waitFor(() => !!window.SB);
@@ -150,7 +152,7 @@ async function boot() {
   }
 
   showView('landing');
-  console.log('[lab] booted · v0.39');
+  console.log('[lab] booted · v0.40');
 }
 
 document.addEventListener('DOMContentLoaded', boot);
