@@ -9,7 +9,7 @@
   height: 100%;
   max-width: 800px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 1rem; /* Reduced padding */
 }
 
 /* Header / Stats */
@@ -17,9 +17,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 1.5rem;
+  padding-bottom: 1rem;
   border-bottom: 1px dashed var(--text-dim);
-  margin-bottom: 2rem;
+  margin-bottom: 1rem; /* Reduced margin */
   flex-shrink: 0;
 }
 
@@ -46,16 +46,17 @@
   justify-content: center;
   align-items: center;
   width: 100%;
+  min-height: 0; /* Allows flex child to shrink */
 }
 
 .bt-prompt {
   font-family: var(--font-accent);
-  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+  font-size: clamp(1.1rem, 2vw, 1.3rem); /* Slightly smaller text */
   font-weight: 500;
   color: var(--text);
   text-align: center;
-  line-height: 1.4;
-  margin-bottom: 2rem;
+  line-height: 1.3;
+  margin-bottom: 1.5rem; /* Reduced margin */
   max-width: 90%;
 }
 
@@ -64,12 +65,12 @@
   background: transparent;
   border: none;
   border-bottom: 2px solid var(--text-dim);
-  padding: 1rem 0;
+  padding: 0.75rem 0;
   width: 100%;
   max-width: 500px;
   text-align: center;
   font-family: var(--font-accent);
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 600;
   color: var(--accent);
   outline: none;
@@ -84,7 +85,7 @@
 .bt-options {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem; /* Tighter gap */
   width: 100%;
   max-width: 600px;
 }
@@ -94,8 +95,8 @@
   border: 1px solid var(--text-dim);
   color: var(--text);
   font-family: var(--font-main);
-  font-size: 1rem;
-  padding: 1rem;
+  font-size: 0.95rem;
+  padding: 0.75rem 1rem; /* Tighter padding */
   text-align: left;
   cursor: pointer;
   border-radius: 0;
@@ -123,14 +124,14 @@
 .bt-tf-row {
   display: flex;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .bt-tf-row .bt-option-btn {
   text-align: center;
   font-family: var(--font-accent);
-  font-size: 1.2rem;
-  padding: 1rem 3rem;
+  font-size: 1.1rem;
+  padding: 0.75rem 3rem;
 }
 
 .bt-reason-box {
@@ -146,7 +147,7 @@
 .bt-seq-container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
   width: 100%;
   max-width: 600px;
 }
@@ -154,7 +155,8 @@
 .bt-seq-item {
   background: transparent;
   border: 1px solid var(--text-dim);
-  padding: 0.8rem 1rem;
+  padding: 0.6rem 1rem; /* Tighter padding */
+  font-size: 0.9rem;
   font-family: var(--font-main);
   cursor: grab;
   display: flex;
@@ -181,7 +183,7 @@
 /* Match */
 .bt-match-container {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
   width: 100%;
   max-width: 700px;
   justify-content: center;
@@ -190,14 +192,15 @@
 .bt-match-col {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex: 1;
 }
 
 .bt-match-btn {
   background: transparent;
   border: 1px solid var(--text-dim);
-  padding: 1rem;
+  padding: 0.75rem;
+  font-size: 0.9rem;
   font-family: var(--font-main);
   color: var(--text);
   cursor: pointer;
@@ -220,23 +223,50 @@
 .bt-actions {
   display: flex;
   justify-content: center;
-  margin-top: 2rem;
+  margin-top: 1rem;
   width: 100%;
 }
 
 .bt-submit-btn {
   min-width: 200px;
-  padding: 1rem 2rem;
-  font-size: 0.9rem;
+  padding: 0.75rem 2rem; /* Tighter padding */
+  font-size: 0.85rem;
+}
+
+.bt-feedback-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  min-height: 2rem;
 }
 
 .bt-feedback {
   font-family: var(--font-mono);
-  font-size: 0.9rem;
-  margin-top: 1rem;
+  font-size: 0.85rem;
   text-align: center;
-  min-height: 1.5rem;
 }
 
 .bt-feedback.is-error { color: #ff5555; }
 .bt-feedback.is-success { color: var(--accent); }
+
+/* Next Arrow Button */
+.bt-next-arrow {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-size: 1.2rem;
+}
+
+.bt-next-arrow:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
