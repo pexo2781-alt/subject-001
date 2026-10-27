@@ -26,6 +26,7 @@ export function initBiologyTest() {
     content: document.getElementById('btContent'),
     actions: document.getElementById('btActions'),
     feedback: document.getElementById('btFeedback'),
+    feedbackRow: document.getElementById('btFeedbackRow'),
     statStreak: document.getElementById('btStatStreak'),
     statCorrect: document.getElementById('btStatCorrect'),
     statWrong: document.getElementById('btStatWrong'),
@@ -34,7 +35,6 @@ export function initBiologyTest() {
 
   if (!els.view) return;
 
-  // Clean exit handler
   els.exitBtn.addEventListener('click', () => {
     resetToIntro();
     closeDrill();
@@ -63,16 +63,14 @@ function updateStats() {
   if (els.statWrong) els.statWrong.textContent = state.wrongCount;
 }
 
-// Determine next question
 function nextQuestion() {
   if (state.streak >= TARGET_STREAK) {
-    // WIN STATE
     els.prompt.textContent = "TEST PASSED";
     els.content.innerHTML = `<p style="font-size:1.2rem; color:var(--text-muted); text-align:center;">You achieved a perfect streak of ${TARGET_STREAK}.</p>`;
     els.feedback.textContent = "";
-    els.feedback.className = "bt-feedback";
+    els.feedbackRow.innerHTML = '';
+    els.feedbackRow.style.display = 'none';
     
-    // Rebuild actions with a clean button
     els.actions.innerHTML = '';
     const btn = document.createElement('button');
     btn.className = 'lab-btn bt-submit-btn';
@@ -88,14 +86,14 @@ function nextQuestion() {
   state.isAnswered = false;
   els.feedback.textContent = "";
   els.feedback.className = "bt-feedback";
+  els.feedbackRow.innerHTML = ''; // Clear arrow
+  els.feedbackRow.style.display = 'none'; // Hide row until needed
   els.actions.innerHTML = "";
 
-  // 1. Check review queue first
   if (state.reviewQueue.length > 0) {
     state.currentConcept = state.reviewQueue.shift();
     state.currentQuestion = pickRandom(state.currentConcept.questions);
   } else {
-    // 2. Pick random concept, then random question
     state.currentConcept = pickRandom(lecture1.concepts);
     state.currentQuestion = pickRandom(state.currentConcept.questions);
   }
@@ -108,7 +106,6 @@ function renderQuestion() {
   els.prompt.textContent = q.prompt;
   els.content.innerHTML = '';
   
-  // Render based on type
   if (q.type === 'typed' || q.type === 'fill') {
     renderTyped(q);
   } else if (q.type === 'mcq') {
@@ -121,8 +118,6 @@ function renderQuestion() {
     renderMatch(q);
   }
 }
-
-// --- RENDERERS ---
 
 function renderTyped(q) {
   const input = document.createElement('input');
@@ -318,8 +313,6 @@ function renderMatch(q) {
   els.content.appendChild(wrapper);
 }
 
-// --- CHECKS ---
-
 function checkTyped(q, val) {
   if (state.isAnswered) return;
   const cleanVal = val.trim().toLowerCase();
@@ -361,14 +354,14 @@ function checkSequence(q, container) {
   }
 }
 
-// --- FLOW ---
-
 function markCorrect() {
   if (state.isAnswered) return;
   state.isAnswered = true;
   state.streak++;
   state.correctCount++;
   updateStats();
+  
+  els.feedbackRow.style.display = 'flex'; // Show row
   els.feedback.textContent = "Correct.";
   els.feedback.classList.add("is-success");
   
@@ -387,6 +380,7 @@ function markWrong(element, msg) {
 
   if (element) element.classList.add('is-wrong');
   
+  els.feedbackRow.style.display = 'flex'; // Show row
   els.feedback.textContent = msg;
   els.feedback.classList.add("is-error");
 
@@ -395,12 +389,15 @@ function markWrong(element, msg) {
   els.actions.innerHTML = '';
   els.content.querySelectorAll('button, input').forEach(el => el.disabled = true);
 
-  const nextBtn = document.createElement('button');
-  nextBtn.className = 'lab-btn bt-submit-btn';
-  nextBtn.textContent = 'Next Question';
-  nextBtn.style.marginTop = '1rem';
-  nextBtn.onclick = nextQuestion;
-  els.actions.appendChild(nextBtn);
+  // Create the Arrow Next Button
+  const arrowBtn = document.createElement('button');
+  arrowBtn.className = 'bt-next-arrow';
+  arrowBtn.innerHTML = '→';
+  arrowBtn.title = 'Next Question';
+  arrowBtn.onclick = nextQuestion;
+  
+  // Append to the feedback row
+  els.feedbackRow.appendChild(arrowBtn);
 }
 
 function pickRandom(arr) {
