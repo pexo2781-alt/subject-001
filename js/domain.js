@@ -27,14 +27,10 @@ export function initDomain({ onExit } = {}) {
     drillCards: Array.from(document.querySelectorAll('.drill-card')),
   });
 
-  // Top Nav Tabs
   els.tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      setTab(tab.dataset.tab);
-    });
+    tab.addEventListener('click', () => setTab(tab.dataset.tab));
   });
 
-  // Domain Choices
   els.choices.forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.disabled) return;
@@ -46,11 +42,9 @@ export function initDomain({ onExit } = {}) {
     });
   });
 
-  // Back buttons
   if (els.backMental) els.backMental.addEventListener('click', () => setView('select'));
   if (els.backDegree) els.backDegree.addEventListener('click', () => setView('select'));
 
-  // Drill Cards
   els.drillCards.forEach(card => {
     card.addEventListener('click', () => {
       if (card.classList.contains('is-locked')) return;
@@ -68,37 +62,33 @@ export function showDomainView() {
 function setTab(tabName) {
   state.activeTab = tabName;
   
-  // Update Tab UI
   els.tabs.forEach(t => {
     t.classList.toggle('is-active', t.dataset.tab === tabName);
   });
 
-  // Show the default view for that tab
   if (tabName === 'domain') {
     setView('select');
-    els.viewDomain.classList.add('is-active');
-    els.viewDegree.classList.remove('is-active');
+    if (els.viewDomain) els.viewDomain.classList.add('is-active');
+    if (els.viewDegree) els.viewDegree.classList.remove('is-active');
   } else if (tabName === 'degree') {
     setView('select');
-    els.viewDomain.classList.remove('is-active');
-    els.viewDegree.classList.add('is-active');
+    if (els.viewDomain) els.viewDomain.classList.remove('is-active');
+    if (els.viewDegree) els.viewDegree.classList.add('is-active');
   }
 }
 
 function setView(viewName) {
   state.activeView = viewName;
 
-  // Hide all
   if (els.viewDomain) els.viewDomain.classList.remove('is-active');
   if (els.viewDegree) els.viewDegree.classList.remove('is-active');
   if (els.drillsMental) els.drillsMental.classList.remove('is-active');
   if (els.drillsDegree) els.drillsDegree.classList.remove('is-active');
   document.querySelectorAll('.drill-view').forEach(el => el.classList.remove('is-active'));
 
-  // Show target
   if (viewName === 'select') {
-    if (state.activeTab === 'domain') els.viewDomain.classList.add('is-active');
-    if (state.activeTab === 'degree') els.viewDegree.classList.add('is-active');
+    if (state.activeTab === 'domain' && els.viewDomain) els.viewDomain.classList.add('is-active');
+    if (state.activeTab === 'degree' && els.viewDegree) els.viewDegree.classList.add('is-active');
   } else if (viewName === 'mental') {
     if (els.drillsMental) els.drillsMental.classList.add('is-active');
   } else if (viewName === 'degree-bio') {
@@ -107,14 +97,11 @@ function setView(viewName) {
 }
 
 function openDrill(id) {
-  // Hide topbar for focus
   if (els.topbar) els.topbar.style.display = 'none';
   
-  // Hide parents
   if (els.drillsMental) els.drillsMental.classList.remove('is-active');
   if (els.drillsDegree) els.drillsDegree.classList.remove('is-active');
 
-  // Show specific drill
   if (id === 'number-memory') {
     if (typeof window.__nmReset === 'function') window.__nmReset();
     const view = document.querySelector('[data-drill-view="number-memory"]');
@@ -142,7 +129,6 @@ export function closeDrill() {
   if (els.topbar) els.topbar.style.display = 'flex';
   document.querySelectorAll('.drill-view').forEach(el => el.classList.remove('is-active'));
   
-  // Return to whichever tab we were on
   if (state.activeView === 'mental') {
     if (els.drillsMental) els.drillsMental.classList.add('is-active');
   } else if (state.activeView === 'degree-bio') {
