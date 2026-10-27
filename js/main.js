@@ -150,7 +150,7 @@ async function boot() {
   }
 
   showView('landing');
-  console.log('[lab] booted · v0.38');
+  console.log('[lab] booted · v0.39');
 }
 
 document.addEventListener('DOMContentLoaded', boot);
