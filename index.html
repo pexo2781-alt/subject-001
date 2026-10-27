@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="css/sequence-memory.css">
   <link rel="stylesheet" href="css/visual-memory.css">
   <link rel="stylesheet" href="css/chimp-test.css">
+  <link rel="stylesheet" href="css/biology-test.css">
 </head>
 <body>
   <div class="bg-grid"></div>
@@ -88,7 +89,6 @@
           </svg>
         </button>
         
-        <!-- Main Tabs -->
         <nav class="domain-nav" id="domainNav">
           <button class="domain-tab is-active" data-tab="domain" type="button">
             <span class="domain-tab-label">Domain</span>
@@ -102,7 +102,7 @@
       </div>
 
       <div class="lab-content">
-        <!-- Domain View -->
+        <!-- Domain Main View -->
         <div class="domain-picker is-active" id="view-domain">
           <div class="domain-picker-inner">
             <span class="domain-kicker">// SELECT DOMAIN</span>
@@ -128,7 +128,7 @@
           </div>
         </div>
 
-        <!-- Degree View -->
+        <!-- Degree Main View -->
         <div class="domain-picker" id="view-degree">
           <div class="domain-picker-inner">
             <span class="domain-kicker">// SELECT MODULE</span>
@@ -195,27 +195,27 @@
             <span class="domain-drills-kicker">// BIOLOGY // GENETICS</span>
           </div>
           <div class="drill-grid">
-            <button class="drill-card is-ready" type="button">
+            <button class="drill-card is-ready" data-drill="biology-test" type="button">
               <span class="drill-card-num">01</span>
-              <span class="drill-card-name">The Central Dogma</span>
-              <span class="drill-card-desc">DNA to RNA to Protein. Test your recall.</span>
-              <span class="drill-card-status">Ready</span>
-            </button>
-            <button class="drill-card is-ready" type="button">
-              <span class="drill-card-num">02</span>
-              <span class="drill-card-name">DNA Replication</span>
-              <span class="drill-card-desc">Key enzymes and leading/lagging strands.</span>
+              <span class="drill-card-name">Lecture 1: Heredity & DNA</span>
+              <span class="drill-card-desc">The Central Dogma, Transformation, and the *Le* mutation.</span>
               <span class="drill-card-status">Ready</span>
             </button>
             <button class="drill-card is-locked" type="button" disabled>
+              <span class="drill-card-num">02</span>
+              <span class="drill-card-name">Lecture 2</span>
+              <span class="drill-card-desc">—</span>
+              <span class="drill-card-status">N/A</span>
+            </button>
+            <button class="drill-card is-locked" type="button" disabled>
               <span class="drill-card-num">03</span>
-              <span class="drill-card-name">Transcription</span>
+              <span class="drill-card-name">Lecture 3</span>
               <span class="drill-card-desc">—</span>
               <span class="drill-card-status">N/A</span>
             </button>
             <button class="drill-card is-locked" type="button" disabled>
               <span class="drill-card-num">04</span>
-              <span class="drill-card-name">Translation</span>
+              <span class="drill-card-name">Lecture 4</span>
               <span class="drill-card-desc">—</span>
               <span class="drill-card-status">N/A</span>
             </button>
@@ -417,6 +417,26 @@
           </div>
         </div>
 
+        <!-- ========== BIOLOGY TEST ENGINE ========== -->
+        <div class="drill-view" id="view-biology-test" data-drill-view="biology-test">
+          <div class="bt-view">
+            <div class="bt-header" id="btHeader">
+              <button class="domain-back" id="btExitBtn" type="button">← Exit</button>
+              <div class="bt-stat-group">
+                <span>Streak: <span class="bt-stat-val" id="btStatStreak">0 / 8</span></span>
+                <span>Correct: <span class="bt-stat-val" id="btStatCorrect">0</span></span>
+                <span>Wrong: <span class="bt-stat-val" id="btStatWrong">0</span></span>
+              </div>
+            </div>
+            <div class="bt-body">
+              <p class="bt-prompt" id="btPrompt">Loading...</p>
+              <div id="btContent" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
+              <div class="bt-feedback" id="btFeedback"></div>
+            </div>
+            <div class="bt-actions" id="btActions"></div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -474,7 +494,7 @@
       </section>
     </div>
 
-    <div class="lab-footer" id="labFooter">LAB · SUBJECT 001 · v0.39</div>
+    <div class="lab-footer" id="labFooter">LAB · SUBJECT 001 · v0.40</div>
   </div>
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
