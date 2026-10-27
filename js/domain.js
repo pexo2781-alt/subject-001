@@ -1,10 +1,10 @@
 /**
- * domain.js — Domain navigation + drill grid.
+ * domain.js — Domain + Degree navigation.
  */
 
 const state = {
-  domain: 'select',
-  drill: null
+  activeTab: 'domain', // 'domain' | 'degree'
+  activeView: 'select' // 'select' | 'mental' | 'degree-bio'
 };
 
 const els = {};
@@ -12,26 +12,45 @@ const els = {};
 export function initDomain({ onExit } = {}) {
   Object.assign(els, {
     topbar: document.getElementById('labTopbar'),
-    tab: document.querySelector('.domain-tab'),
-    picker: document.getElementById('domainPicker'),
-    drills: document.getElementById('domainDrills'),
-    backBtn: document.getElementById('domainBackBtn'),
+    tabs: Array.from(document.querySelectorAll('.domain-tab')),
+    
+    viewDomain: document.getElementById('view-domain'),
+    viewDegree: document.getElementById('view-degree'),
+    
+    drillsMental: document.getElementById('drills-mental'),
+    drillsDegree: document.getElementById('drills-degree'),
+    
+    backMental: document.getElementById('back-mental'),
+    backDegree: document.getElementById('back-degree'),
+    
     choices: Array.from(document.querySelectorAll('.domain-choice')),
     drillCards: Array.from(document.querySelectorAll('.drill-card')),
   });
 
-  els.tab.addEventListener('click', () => setDomain('select'));
-
-  els.choices.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const d = btn.dataset.domain;
-      if (btn.disabled || d === 'academic' || d === 'physical') return;
-      setDomain(d);
+  // Top Nav Tabs
+  els.tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      setTab(tab.dataset.tab);
     });
   });
 
-  els.backBtn.addEventListener('click', () => setDomain('select'));
+  // Domain Choices
+  els.choices.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.disabled) return;
+      const domain = btn.dataset.domain;
+      const degree = btn.dataset.degree;
+      
+      if (domain === 'mental') setView('mental');
+      if (degree === 'biology') setView('degree-bio');
+    });
+  });
 
+  // Back buttons
+  if (els.backMental) els.backMental.addEventListener('click', () => setView('select'));
+  if (els.backDegree) els.backDegree.addEventListener('click', () => setView('select'));
+
+  // Drill Cards
   els.drillCards.forEach(card => {
     card.addEventListener('click', () => {
       if (card.classList.contains('is-locked')) return;
@@ -43,34 +62,59 @@ export function initDomain({ onExit } = {}) {
 
 export function showDomainView() {
   if (els.topbar) els.topbar.style.display = 'flex';
-  setDomain('select');
+  setTab('domain');
 }
 
-function setDomain(domain) {
-  state.domain = domain;
-  state.drill = null;
+function setTab(tabName) {
+  state.activeTab = tabName;
+  
+  // Update Tab UI
+  els.tabs.forEach(t => {
+    t.classList.toggle('is-active', t.dataset.tab === tabName);
+  });
 
-  if (els.topbar) els.topbar.style.display = 'flex';
-  if (els.picker) els.picker.classList.toggle('is-active', domain === 'select');
-  if (els.drills) els.drills.classList.toggle('is-active', domain === 'mental');
+  // Show the default view for that tab
+  if (tabName === 'domain') {
+    setView('select');
+    els.viewDomain.classList.add('is-active');
+    els.viewDegree.classList.remove('is-active');
+  } else if (tabName === 'degree') {
+    setView('select');
+    els.viewDomain.classList.remove('is-active');
+    els.viewDegree.classList.add('is-active');
+  }
+}
 
+function setView(viewName) {
+  state.activeView = viewName;
+
+  // Hide all
+  if (els.viewDomain) els.viewDomain.classList.remove('is-active');
+  if (els.viewDegree) els.viewDegree.classList.remove('is-active');
+  if (els.drillsMental) els.drillsMental.classList.remove('is-active');
+  if (els.drillsDegree) els.drillsDegree.classList.remove('is-active');
   document.querySelectorAll('.drill-view').forEach(el => el.classList.remove('is-active'));
 
-  if (els.tab) {
-    els.tab.classList.toggle('is-active', domain !== 'select');
-    els.tab.classList.toggle('is-open', domain !== 'select');
-    els.tab.querySelector('.domain-tab-label').textContent =
-      domain === 'select' ? 'Domain' : capitalize(domain);
+  // Show target
+  if (viewName === 'select') {
+    if (state.activeTab === 'domain') els.viewDomain.classList.add('is-active');
+    if (state.activeTab === 'degree') els.viewDegree.classList.add('is-active');
+  } else if (viewName === 'mental') {
+    if (els.drillsMental) els.drillsMental.classList.add('is-active');
+  } else if (viewName === 'degree-bio') {
+    if (els.drillsDegree) els.drillsDegree.classList.add('is-active');
   }
 }
 
 function openDrill(id) {
-  state.drill = id;
-  
+  // Hide topbar for focus
   if (els.topbar) els.topbar.style.display = 'none';
-  if (els.drills) els.drills.classList.remove('is-active');
-  if (els.picker) els.picker.classList.remove('is-active');
+  
+  // Hide parents
+  if (els.drillsMental) els.drillsMental.classList.remove('is-active');
+  if (els.drillsDegree) els.drillsDegree.classList.remove('is-active');
 
+  // Show specific drill
   if (id === 'number-memory') {
     if (typeof window.__nmReset === 'function') window.__nmReset();
     const view = document.querySelector('[data-drill-view="number-memory"]');
@@ -91,12 +135,15 @@ function openDrill(id) {
 }
 
 export function closeDrill() {
-  state.drill = null;
-  document.querySelectorAll('.drill-view').forEach(el => el.classList.remove('is-active'));
   if (els.topbar) els.topbar.style.display = 'flex';
-  if (els.drills) els.drills.classList.add('is-active');
-}
-
-function capitalize(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  document.querySelectorAll('.drill-view').forEach(el => el.classList.remove('is-active'));
+  
+  // Return to whichever tab we were on
+  if (state.activeTab === 'mental') {
+    if (els.drillsMental) els.drillsMental.classList.add('is-active');
+  } else if (state.activeTab === 'degree-bio') {
+    if (els.drillsDegree) els.drillsDegree.classList.add('is-active');
+  } else {
+    setView('select');
+  }
 }
