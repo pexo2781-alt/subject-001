@@ -12,7 +12,6 @@ const state = {
   currentConcept: null,
   reviewQueue: [],
   isAnswered: false,
-  // temp state for complex questions
   tempData: null
 };
 
@@ -35,9 +34,10 @@ export function initBiologyTest() {
 
   if (!els.view) return;
 
+  // Clean exit handler
   els.exitBtn.addEventListener('click', () => {
-    closeDrill();
     resetToIntro();
+    closeDrill();
   });
 
   resetToIntro();
@@ -58,9 +58,9 @@ export function resetToIntro() {
 }
 
 function updateStats() {
-  els.statStreak.textContent = `${state.streak} / ${TARGET_STREAK}`;
-  els.statCorrect.textContent = state.correctCount;
-  els.statWrong.textContent = state.wrongCount;
+  if (els.statStreak) els.statStreak.textContent = `${state.streak} / ${TARGET_STREAK}`;
+  if (els.statCorrect) els.statCorrect.textContent = state.correctCount;
+  if (els.statWrong) els.statWrong.textContent = state.wrongCount;
 }
 
 // Determine next question
@@ -69,8 +69,19 @@ function nextQuestion() {
     // WIN STATE
     els.prompt.textContent = "TEST PASSED";
     els.content.innerHTML = `<p style="font-size:1.2rem; color:var(--text-muted); text-align:center;">You achieved a perfect streak of ${TARGET_STREAK}.</p>`;
-    els.actions.innerHTML = `<button class="lab-btn" onclick="document.getElementById('btExitBtn').click()">Return to Menu</button>`;
     els.feedback.textContent = "";
+    els.feedback.className = "bt-feedback";
+    
+    // Rebuild actions with a clean button
+    els.actions.innerHTML = '';
+    const btn = document.createElement('button');
+    btn.className = 'lab-btn bt-submit-btn';
+    btn.textContent = 'Return to Menu';
+    btn.addEventListener('click', () => {
+      resetToIntro();
+      closeDrill();
+    });
+    els.actions.appendChild(btn);
     return;
   }
 
@@ -170,12 +181,10 @@ function renderTF(q) {
 
 function handleTFSelection(val, q, wrapper) {
   if (val !== q.answer) {
-    // Immediate fail
     markWrong(wrapper.querySelectorAll('.bt-option-btn')[val ? 0 : 1], "Incorrect. " + (q.reason || ""));
     return;
   }
   
-  // If correct, must select reason
   wrapper.style.display = 'none';
   
   const reasonBox = document.createElement('div');
@@ -201,7 +210,6 @@ function handleTFSelection(val, q, wrapper) {
 }
 
 function renderSequence(q) {
-  // Shuffle steps initially
   const shuffled = [...q.steps].sort(() => Math.random() - 0.5);
   const container = document.createElement('div');
   container.className = 'bt-seq-container';
@@ -212,7 +220,6 @@ function renderSequence(q) {
     item.draggable = true;
     item.innerHTML = `<span class="bt-seq-num">${index + 1}.</span> <span>${step}</span>`;
     
-    // Simple drag and drop implementation
     item.ondragstart = (e) => {
       e.dataTransfer.setData('text/plain', index);
       item.classList.add('dragging');
@@ -233,7 +240,6 @@ function renderSequence(q) {
         container.insertBefore(draggedEl, item);
       }
       
-      // Update numbers
       Array.from(container.children).forEach((el, i) => {
         el.querySelector('.bt-seq-num').textContent = `${i + 1}.`;
       });
@@ -284,12 +290,11 @@ function renderMatch(q) {
     btn.textContent = text;
     btn.onclick = () => {
       if (btn.classList.contains('is-matched')) return;
-      if (!selectedLeft) return; // must select left first
+      if (!selectedLeft) return;
       
       const leftText = selectedLeft.textContent;
       const rightText = text;
       
-      // Check if pair exists
       const pair = q.pairs.find(p => p.left === leftText && p.right === rightText);
       
       if (pair) {
@@ -298,7 +303,6 @@ function renderMatch(q) {
         btn.classList.add('is-matched');
         selectedLeft = null;
         
-        // Check if all matched
         if (colL.querySelectorAll('.is-matched').length === q.pairs.length) {
           markCorrect();
         }
@@ -377,7 +381,6 @@ function markWrong(element, msg) {
   if (state.isAnswered) return;
   state.isAnswered = true;
   
-  // Reset streak
   state.streak = 0;
   state.wrongCount++;
   updateStats();
@@ -387,14 +390,11 @@ function markWrong(element, msg) {
   els.feedback.textContent = msg;
   els.feedback.classList.add("is-error");
 
-  // Add current concept to review queue
   state.reviewQueue.push(state.currentConcept);
 
-  // Disable all buttons to prevent double clicking
   els.actions.innerHTML = '';
   els.content.querySelectorAll('button, input').forEach(el => el.disabled = true);
 
-  // Add next button
   const nextBtn = document.createElement('button');
   nextBtn.className = 'lab-btn bt-submit-btn';
   nextBtn.textContent = 'Next Question';
