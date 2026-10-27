@@ -143,11 +143,11 @@
   animation: fadeSlideUp 0.3s ease;
 }
 
-/* Sequence (New Click-to-Swap System) */
+/* Sequence */
 .bt-seq-container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
   width: 100%;
   max-width: 600px;
 }
@@ -188,7 +188,6 @@
   flex: 1;
 }
 
-/* Up/Down arrows */
 .bt-seq-arrows {
   display: flex;
   flex-direction: column;
@@ -262,19 +261,27 @@
   font-size: 0.85rem;
 }
 
+/* Feedback Row - Made prominent and visible */
 .bt-feedback-row {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
   min-height: 2rem;
+  width: 100%;
+  max-width: 700px;
+  padding: 1rem;
+  background: rgba(var(--text-rgb), 0.02);
+  border: 1px solid var(--text-dim);
+  animation: fadeSlideUp 0.3s ease;
 }
 
 .bt-feedback {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   text-align: center;
+  line-height: 1.5;
 }
 
 .bt-feedback.is-error { color: #ff5555; }
@@ -293,6 +300,7 @@
   cursor: pointer;
   transition: all var(--transition);
   font-size: 1.2rem;
+  flex-shrink: 0;
 }
 
 .bt-next-arrow:hover {
