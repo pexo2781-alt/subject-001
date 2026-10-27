@@ -176,7 +176,7 @@ function renderTF(q) {
 
 function handleTFSelection(val, q, wrapper) {
   if (val !== q.answer) {
-    markWrong(wrapper.querySelectorAll('.bt-option-btn')[val ? 0 : 1], "Incorrect. " + (q.reason || ""));
+    markWrong(wrapper.querySelectorAll('.bt-option-btn')[val ? 0 : 1], "Incorrect. The correct answer is False. " + q.explanation);
     return;
   }
   
@@ -193,9 +193,9 @@ function handleTFSelection(val, q, wrapper) {
     btn.textContent = r;
     btn.onclick = () => {
       if (r === q.reason) {
-        markCorrect();
+        markCorrect(q.explanation);
       } else {
-        markWrong(btn, "Incorrect reason.");
+        markWrong(btn, `Incorrect reason. ${q.explanation}`);
       }
     };
     reasonBox.appendChild(btn);
@@ -204,9 +204,7 @@ function handleTFSelection(val, q, wrapper) {
   els.content.appendChild(reasonBox);
 }
 
-/* --- NEW SEQUENCE LOGIC --- */
 function renderSequence(q) {
-  // Shuffle the steps initially
   const shuffled = [...q.steps].sort(() => Math.random() - 0.5);
   const container = document.createElement('div');
   container.className = 'bt-seq-container';
@@ -241,35 +239,29 @@ function renderSequence(q) {
       </div>
     `;
 
-    // Click to select for swapping
     item.onclick = (e) => {
-      if (e.target.classList.contains('bt-seq-arrow')) return; // ignore arrow clicks
+      if (e.target.classList.contains('bt-seq-arrow')) return;
 
       if (selectedItem === item) {
-        // Deselect
         item.classList.remove('is-selected');
         selectedItem = null;
       } else if (selectedItem) {
-        // Swap
         selectedItem.classList.remove('is-selected');
         const parent = item.parentNode;
         const itemNext = item.nextSibling;
         const selNext = selectedItem.nextSibling;
         
-        // Standard DOM swap
         parent.insertBefore(selectedItem, itemNext);
         parent.insertBefore(item, selNext);
         
         refreshNumbers();
         selectedItem = null;
       } else {
-        // Select
         item.classList.add('is-selected');
         selectedItem = item;
       }
     };
 
-    // Arrow controls
     item.querySelectorAll('.bt-seq-arrow').forEach(btn => {
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -293,9 +285,9 @@ function renderSequence(q) {
     const currentOrder = Array.from(container.children).map(el => el.querySelector('.bt-seq-text').textContent);
     const isCorrect = currentOrder.every((val, index) => val === q.steps[index]);
     if (isCorrect) {
-      markCorrect();
+      markCorrect(q.explanation);
     } else {
-      markWrong(null, "Incorrect order.");
+      markWrong(null, `Incorrect order. ${q.explanation}`);
     }
   };
   els.actions.appendChild(btn);
@@ -348,10 +340,10 @@ function renderMatch(q) {
         selectedLeft = null;
         
         if (colL.querySelectorAll('.is-matched').length === q.pairs.length) {
-          markCorrect();
+          markCorrect(q.explanation);
         }
       } else {
-        markWrong(btn, "Incorrect match.");
+        markWrong(btn, `Incorrect match. ${q.explanation}`);
       }
     };
     colR.appendChild(btn);
@@ -370,9 +362,9 @@ function checkTyped(q, val) {
   const validAnswers = [q.answer, ...(q.accept || [])].map(a => a.toLowerCase());
   
   if (validAnswers.includes(cleanVal)) {
-    markCorrect();
+    markCorrect(q.explanation);
   } else {
-    markWrong(null, `Incorrect. The expected answer was: ${q.answer}`);
+    markWrong(null, `Incorrect. The expected answer was: ${q.answer}. ${q.explanation}`);
   }
 }
 
@@ -382,15 +374,15 @@ function checkMCQ(q, selectedIdx, wrapper) {
   
   if (selectedIdx === q.answer) {
     btns[selectedIdx].classList.add('is-correct');
-    markCorrect();
+    markCorrect(q.explanation);
   } else {
     btns[selectedIdx].classList.add('is-wrong');
     btns[q.answer].classList.add('is-correct');
-    markWrong(null, `Incorrect. The correct answer was: ${q.options[q.answer]}`);
+    markWrong(null, `Incorrect. The correct answer was: ${q.options[q.answer]}. ${q.explanation}`);
   }
 }
 
-function markCorrect() {
+function markCorrect(explanation) {
   if (state.isAnswered) return;
   state.isAnswered = true;
   state.streak++;
@@ -398,12 +390,12 @@ function markCorrect() {
   updateStats();
   
   els.feedbackRow.style.display = 'flex';
-  els.feedback.textContent = "Correct.";
+  els.feedback.textContent = `Correct. ${explanation || ''}`;
   els.feedback.classList.add("is-success");
   
   setTimeout(() => {
     nextQuestion();
-  }, 800);
+  }, 2500); // Gives the user time to read the explanation
 }
 
 function markWrong(element, msg) {
