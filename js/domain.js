@@ -131,6 +131,10 @@ function openDrill(id) {
     if (typeof window.__ctReset === 'function') window.__ctReset();
     const view = document.querySelector('[data-drill-view="chimp-test"]');
     if (view) view.classList.add('is-active');
+  } else if (id === 'biology-test') {
+    if (typeof window.__btReset === 'function') window.__btReset();
+    const view = document.querySelector('[data-drill-view="biology-test"]');
+    if (view) view.classList.add('is-active');
   }
 }
 
@@ -139,9 +143,9 @@ export function closeDrill() {
   document.querySelectorAll('.drill-view').forEach(el => el.classList.remove('is-active'));
   
   // Return to whichever tab we were on
-  if (state.activeTab === 'mental') {
+  if (state.activeView === 'mental') {
     if (els.drillsMental) els.drillsMental.classList.add('is-active');
-  } else if (state.activeTab === 'degree-bio') {
+  } else if (state.activeView === 'degree-bio') {
     if (els.drillsDegree) els.drillsDegree.classList.add('is-active');
   } else {
     setView('select');
