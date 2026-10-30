@@ -86,9 +86,9 @@ export const lecture1 = {
           type: "sequence",
           prompt: "Put the steps of Griffith's critical experiment in order (mice were injected with):",
           steps: [
-            "Heat-killed IIIS (smooth) bacteria only → Mouse lives",
-            "Living IIR (rough) bacteria only → Mouse lives",
             "Living IIIS (smooth) bacteria only → Mouse dies",
+            "Living IIR (rough) bacteria only → Mouse lives",
+             "Heat-killed IIIS (smooth) bacteria only → Mouse lives",
             "Living IIR (rough) + Heat-killed IIIS (smooth) → Mouse dies"
           ],
           explanation: "Griffith proved that the heat-killed virulent bacteria could pass on their virulence to the living avirulent bacteria."
