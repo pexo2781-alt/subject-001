@@ -9,7 +9,7 @@ import { lecture2 } from './biology-lecture2.js';
 
 export const lectures = {
   lecture1,
-  // lecture2,
+  lecture2,
   // lecture3,
 };
 
