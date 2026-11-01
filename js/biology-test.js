@@ -1,10 +1,11 @@
-import { lecture1 } from './data/biology-lecture1.js';
+import { getConceptPool, getLectureLabel } from './data/index.js';
 import { closeDrill } from './domain.js';
 
 const TARGET_STREAK = 8;
 
 const state = {
   running: false,
+  lectureId: 'lecture1',   // set before reset via window.__btSetLecture(id)
   streak: 0,
   correctCount: 0,
   wrongCount: 0,
@@ -21,7 +22,7 @@ export function initBiologyTest() {
     // Stages
     stageQuestion: document.getElementById('btStageQuestion'),
     stageFeedback: document.getElementById('btStageFeedback'),
-    
+
     // Question Elements
     prompt: document.getElementById('btPrompt'),
     content: document.getElementById('btContent'),
@@ -52,6 +53,11 @@ export function initBiologyTest() {
   resetToIntro();
 }
 
+/** Set which lecture (or 'all') the next session should use. */
+export function setActiveLecture(lectureId) {
+  state.lectureId = lectureId || 'lecture1';
+}
+
 export function resetToIntro() {
   state.running = true;
   state.streak = 0;
@@ -63,7 +69,7 @@ export function resetToIntro() {
   // Make sure the view is active
   const view = document.getElementById('view-biology-test');
   if (view) view.classList.add('is-active');
-  
+
   updateStats();
   showStage('question');
   nextQuestion();
@@ -90,7 +96,8 @@ function nextQuestion() {
     // WIN STATE
     els.feedbackTitle.textContent = "TEST PASSED";
     els.feedbackTitle.className = "bt-feedback-title is-correct";
-    els.feedbackText.innerHTML = `You achieved a perfect streak of <strong>${TARGET_STREAK}</strong>.`;
+    els.feedbackText.innerHTML =
+      `You achieved a perfect streak of <strong>${TARGET_STREAK}</strong> on <strong>${getLectureLabel(state.lectureId)}</strong>.`;
     els.continueBtn.textContent = "Return to Menu";
     els.continueBtn.onclick = () => {
       resetToIntro();
@@ -107,11 +114,26 @@ function nextQuestion() {
   };
   els.actions.innerHTML = "";
 
+  const pool = getConceptPool(state.lectureId);
+  if (!pool.length) {
+    // No data for this lecture — bail gracefully.
+    els.feedbackTitle.textContent = "NO DATA";
+    els.feedbackTitle.className = "bt-feedback-title is-wrong";
+    els.feedbackText.innerHTML = `No concepts found for <strong>${getLectureLabel(state.lectureId)}</strong>.`;
+    els.continueBtn.textContent = "Return to Menu";
+    els.continueBtn.onclick = () => {
+      resetToIntro();
+      closeDrill();
+    };
+    showStage('feedback');
+    return;
+  }
+
   if (state.reviewQueue.length > 0) {
     state.currentConcept = state.reviewQueue.shift();
     state.currentQuestion = pickRandom(state.currentConcept.questions);
   } else {
-    state.currentConcept = pickRandom(lecture1.concepts);
+    state.currentConcept = pickRandom(pool);
     state.currentQuestion = pickRandom(state.currentConcept.questions);
   }
 
@@ -122,7 +144,7 @@ function renderQuestion() {
   const q = state.currentQuestion;
   els.prompt.textContent = q.prompt;
   els.content.innerHTML = '';
-  
+
   if (q.type === 'typed' || q.type === 'fill') {
     renderTyped(q);
   } else if (q.type === 'mcq') {
@@ -136,7 +158,7 @@ function renderQuestion() {
   }
 }
 
-// --- RENDERERS (Unchanged mechanics, just call handleResult now) ---
+// --- RENDERERS ---
 
 function renderTyped(q) {
   const input = document.createElement('input');
@@ -144,7 +166,7 @@ function renderTyped(q) {
   input.className = 'bt-input';
   input.placeholder = 'Type answer here...';
   input.autocomplete = 'off';
-  
+
   const btn = document.createElement('button');
   btn.className = 'lab-btn bt-submit-btn';
   btn.textContent = 'Submit';
@@ -162,7 +184,7 @@ function renderTyped(q) {
 function renderMCQ(q) {
   const wrapper = document.createElement('div');
   wrapper.className = 'bt-options';
-  
+
   q.options.forEach((opt, index) => {
     const btn = document.createElement('button');
     btn.className = 'bt-option-btn';
@@ -177,7 +199,7 @@ function renderMCQ(q) {
 function renderTF(q) {
   const wrapper = document.createElement('div');
   wrapper.className = 'bt-tf-row';
-  
+
   const tBtn = document.createElement('button');
   tBtn.className = 'bt-option-btn';
   tBtn.textContent = 'True';
@@ -198,14 +220,14 @@ function handleTFSelection(val, q, wrapper) {
     handleResult(false, "Incorrect. The statement is False.", q.explanation);
     return;
   }
-  
+
   wrapper.style.display = 'none';
-  
+
   const reasonBox = document.createElement('div');
   reasonBox.className = 'bt-reason-box';
-  
+
   const reasons = [q.reason, ...q.wrong_reasons].sort(() => Math.random() - 0.5);
-  
+
   reasons.forEach(r => {
     const btn = document.createElement('button');
     btn.className = 'bt-option-btn';
@@ -227,7 +249,7 @@ function renderSequence(q) {
   const shuffled = [...q.steps].sort(() => Math.random() - 0.5);
   const container = document.createElement('div');
   container.className = 'bt-seq-container';
-  
+
   let selectedItem = null;
 
   const refreshNumbers = () => {
@@ -269,10 +291,10 @@ function renderSequence(q) {
         const parent = item.parentNode;
         const itemNext = item.nextSibling;
         const selNext = selectedItem.nextSibling;
-        
+
         parent.insertBefore(selectedItem, itemNext);
         parent.insertBefore(item, selNext);
-        
+
         refreshNumbers();
         selectedItem = null;
       } else {
@@ -291,7 +313,7 @@ function renderSequence(q) {
         moveItem(item, btn.dataset.dir);
       };
     });
-    
+
     container.appendChild(item);
   });
 
@@ -301,8 +323,15 @@ function renderSequence(q) {
   btn.className = 'lab-btn bt-submit-btn';
   btn.textContent = 'Submit Order';
   btn.onclick = () => {
-    const currentOrder = Array.from(container.children).map(el => el.querySelector('.bt-seq-text').textContent);
-    const isCorrect = currentOrder.every((val, index) => val === q.steps[index]);
+    // Trim + lowercase both sides so invisible whitespace can't break the check.
+    const currentOrder = Array.from(container.children).map(el =>
+      el.querySelector('.bt-seq-text').textContent.trim().toLowerCase()
+    );
+    const expectedOrder = q.steps.map(step => String(step).trim().toLowerCase());
+
+    const isCorrect = currentOrder.length === expectedOrder.length &&
+      currentOrder.every((val, index) => val === expectedOrder[index]);
+
     if (isCorrect) {
       handleResult(true, "Correct.", q.explanation);
     } else {
@@ -315,10 +344,10 @@ function renderSequence(q) {
 function renderMatch(q) {
   const leftItems = q.pairs.map(p => p.left).sort(() => Math.random() - 0.5);
   const rightItems = q.pairs.map(p => p.right).sort(() => Math.random() - 0.5);
-  
+
   const wrapper = document.createElement('div');
   wrapper.className = 'bt-match-container';
-  
+
   const colL = document.createElement('div');
   colL.className = 'bt-match-col';
   const colR = document.createElement('div');
@@ -346,18 +375,18 @@ function renderMatch(q) {
     btn.onclick = () => {
       if (btn.classList.contains('is-matched')) return;
       if (!selectedLeft) return;
-      
+
       const leftText = selectedLeft.textContent;
       const rightText = text;
-      
+
       const pair = q.pairs.find(p => p.left === leftText && p.right === rightText);
-      
+
       if (pair) {
         selectedLeft.classList.remove('is-selected');
         selectedLeft.classList.add('is-matched');
         btn.classList.add('is-matched');
         selectedLeft = null;
-        
+
         if (colL.querySelectorAll('.is-matched').length === q.pairs.length) {
           handleResult(true, "Correct.", q.explanation);
         }
@@ -377,9 +406,11 @@ function checkTyped(q, val) {
   if (state.isAnswered) return;
   const cleanVal = val.trim().toLowerCase();
   if (!cleanVal) return;
-  
-  const validAnswers = [q.answer, ...(q.accept || [])].map(a => a.toLowerCase());
-  
+
+  const validAnswers = [q.answer, ...(q.accept || [])]
+    .filter(a => a != null)
+    .map(a => String(a).toLowerCase().trim());
+
   if (validAnswers.includes(cleanVal)) {
     handleResult(true, "Correct.", q.explanation);
   } else {
@@ -390,7 +421,7 @@ function checkTyped(q, val) {
 function checkMCQ(q, selectedIdx, wrapper) {
   if (state.isAnswered) return;
   const btns = wrapper.querySelectorAll('.bt-option-btn');
-  
+
   if (selectedIdx === q.answer) {
     btns[selectedIdx].classList.add('is-correct');
     handleResult(true, "Correct.", q.explanation);
@@ -404,7 +435,7 @@ function checkMCQ(q, selectedIdx, wrapper) {
 function handleResult(isCorrect, title, explanation) {
   if (state.isAnswered) return;
   state.isAnswered = true;
-  
+
   if (isCorrect) {
     state.streak++;
     state.correctCount++;
@@ -413,15 +444,14 @@ function handleResult(isCorrect, title, explanation) {
     state.wrongCount++;
     state.reviewQueue.push(state.currentConcept);
   }
-  
+
   updateStats();
 
-  // Populate and show feedback screen
   els.feedbackTitle.textContent = title;
   els.feedbackTitle.className = isCorrect ? "bt-feedback-title is-correct" : "bt-feedback-title is-wrong";
   els.feedbackText.innerHTML = `<strong>Explanation:</strong> ${explanation || 'No explanation provided.'}`;
   els.continueBtn.textContent = "Continue";
-  
+
   showStage('feedback');
 }
 
@@ -429,4 +459,6 @@ function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// Global hooks used by domain.js
 window.__btReset = resetToIntro;
+window.__btSetLecture = setActiveLecture;
