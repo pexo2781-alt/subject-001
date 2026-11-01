@@ -4,7 +4,7 @@
 // ============================================================
 
 import { lecture1 } from './biology-lecture1.js';
-// import { lecture2 } from './biology-lecture2.js';
+import { lecture2 } from './biology-lecture2.js';
 // import { lecture3 } from './biology-lecture3.js';
 
 export const lectures = {
