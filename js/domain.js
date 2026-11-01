@@ -13,16 +13,16 @@ export function initDomain({ onExit } = {}) {
   Object.assign(els, {
     topbar: document.getElementById('labTopbar'),
     tabs: Array.from(document.querySelectorAll('.domain-tab')),
-    
+
     viewDomain: document.getElementById('view-domain'),
     viewDegree: document.getElementById('view-degree'),
-    
+
     drillsMental: document.getElementById('drills-mental'),
     drillsDegree: document.getElementById('drills-degree'),
-    
+
     backMental: document.getElementById('back-mental'),
     backDegree: document.getElementById('back-degree'),
-    
+
     choices: Array.from(document.querySelectorAll('.domain-choice')),
     drillCards: Array.from(document.querySelectorAll('.drill-card')),
   });
@@ -36,7 +36,7 @@ export function initDomain({ onExit } = {}) {
       if (btn.disabled) return;
       const domain = btn.dataset.domain;
       const degree = btn.dataset.degree;
-      
+
       if (domain === 'mental') setView('mental');
       if (degree === 'biology') setView('degree-bio');
     });
@@ -48,8 +48,9 @@ export function initDomain({ onExit } = {}) {
   els.drillCards.forEach(card => {
     card.addEventListener('click', () => {
       if (card.classList.contains('is-locked')) return;
+      if (card.disabled) return;
       const id = card.dataset.drill;
-      if (id) openDrill(id);
+      if (id) openDrill(id, card.dataset.lecture);
     });
   });
 }
@@ -61,7 +62,7 @@ export function showDomainView() {
 
 function setTab(tabName) {
   state.activeTab = tabName;
-  
+
   els.tabs.forEach(t => {
     t.classList.toggle('is-active', t.dataset.tab === tabName);
   });
@@ -96,9 +97,9 @@ function setView(viewName) {
   }
 }
 
-function openDrill(id) {
+function openDrill(id, lectureId) {
   if (els.topbar) els.topbar.style.display = 'none';
-  
+
   if (els.drillsMental) els.drillsMental.classList.remove('is-active');
   if (els.drillsDegree) els.drillsDegree.classList.remove('is-active');
 
@@ -119,6 +120,10 @@ function openDrill(id) {
     const view = document.querySelector('[data-drill-view="chimp-test"]');
     if (view) view.classList.add('is-active');
   } else if (id === 'biology-test') {
+    // Tell the engine which lecture to run BEFORE resetting it.
+    if (typeof window.__btSetLecture === 'function') {
+      window.__btSetLecture(lectureId || 'lecture1');
+    }
     if (typeof window.__btReset === 'function') window.__btReset();
     const view = document.querySelector('[data-drill-view="biology-test"]');
     if (view) view.classList.add('is-active');
@@ -128,7 +133,7 @@ function openDrill(id) {
 export function closeDrill() {
   if (els.topbar) els.topbar.style.display = 'flex';
   document.querySelectorAll('.drill-view').forEach(el => el.classList.remove('is-active'));
-  
+
   if (state.activeView === 'mental') {
     if (els.drillsMental) els.drillsMental.classList.add('is-active');
   } else if (state.activeView === 'degree-bio') {
