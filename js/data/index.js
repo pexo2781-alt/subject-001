@@ -1,38 +1,65 @@
 // ============================================================
-// js/data/index.js — Lecture registry
-// Add a line here for each new lecture data file.
+// js/data/index.js — Lecture registry (Bio + Chem modules)
 // ============================================================
 
-import { lecture1 } from './biology-lecture1.js';
-import { lecture2 } from './biology-lecture2.js';
-// import { lecture3 } from './biology-lecture3.js';
+import { lecture1 as bio1 } from './biology-lecture1.js';
+import { lecture2 as bio2 } from './biology-lecture2.js';
+import { chemistryLecture1 as chem1 } from './chemistry-lecture1.js';
+// import { lecture3 as bio3 } from './biology-lecture3.js';
 
+// Biology module (Molecular Biology & Genetics)
 export const lectures = {
-  lecture1,
-  lecture2,
-  // lecture3,
+  lecture1: bio1,
+  lecture2: bio2,
+  // lecture3: bio3,
+};
+
+// Chemistry module (Chemistry for the Biosciences)
+export const chemistryLectures = {
+  lecture1: chem1,
 };
 
 /**
- * Get the concept pool for a given lecture id.
- * - If lectureId is 'all' (or falsy), returns a flat pool of every concept
- *   across every lecture.
- * - If lectureId matches a known lecture, returns that lecture's concepts.
- * - Otherwise returns an empty array.
+ * Master registry: module → lectureId → lectureData
+ * The bio engine uses this to resolve whichever lecture is passed.
  */
-export function getConceptPool(lectureId) {
-  if (!lectureId || lectureId === 'all') {
-    return Object.values(lectures).flatMap(l => l?.concepts ?? []);
+export const registry = {
+  biology: lectures,
+  chemistry: chemistryLectures,
+};
+
+/**
+ * Resolve a lecture by module + lectureId.
+ * If moduleId is omitted, searches all modules.
+ */
+export function resolveLecture(moduleId, lectureId) {
+  if (moduleId && registry[moduleId]) {
+    return registry[moduleId][lectureId] ?? null;
   }
-  return lectures[lectureId]?.concepts ?? [];
+  for (const mod of Object.values(registry)) {
+    if (mod[lectureId]) return mod[lectureId];
+  }
+  return null;
+}
+
+/**
+ * Get the concept pool for a given module + lecture id.
+ * lectureId === 'all' → flat pool across every lecture in the module.
+ */
+export function getConceptPool(moduleId, lectureId) {
+  const moduleRegistry = registry[moduleId] ?? lectures;
+
+  if (!lectureId || lectureId === 'all') {
+    return Object.values(moduleRegistry).flatMap(l => l?.concepts ?? []);
+  }
+  return moduleRegistry[lectureId]?.concepts ?? [];
 }
 
 /**
  * Human-readable label for a lecture id (used on the win screen).
  */
-export function getLectureLabel(lectureId) {
-  if (!lectureId || lectureId === 'all') return 'All Lectures';
-  const lec = lectures[lectureId];
-  if (!lec) return lectureId;
-  return lec.title || lectureId;
+export function getLectureLabel(moduleId, lectureId) {
+  const lecture = resolveLecture(moduleId, lectureId);
+  if (!lecture) return lectureId || 'Unknown Lecture';
+  return lecture.title || lectureId;
 }
