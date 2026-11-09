@@ -5,6 +5,7 @@ const TARGET_STREAK = 8;
 
 const state = {
   running: false,
+  moduleId: 'biology',
   lectureId: 'lecture1',   // set before reset via window.__btSetLecture(id)
   streak: 0,
   correctCount: 0,
@@ -54,7 +55,14 @@ export function initBiologyTest() {
 }
 
 /** Set which lecture (or 'all') the next session should use. */
-export function setActiveLecture(lectureId) {
+export function setActiveLecture(moduleId, lectureId) {
+  // Support both call styles: setActiveLecture('biology','lecture1')
+  // AND setActiveLecture('lecture1') → legacy call from domain.js
+  if (lectureId === undefined) {
+    lectureId = moduleId;
+    moduleId = 'biology';
+  }
+  state.moduleId = moduleId || 'biology';
   state.lectureId = lectureId || 'lecture1';
 }
 
@@ -97,7 +105,7 @@ function nextQuestion() {
     els.feedbackTitle.textContent = "TEST PASSED";
     els.feedbackTitle.className = "bt-feedback-title is-correct";
     els.feedbackText.innerHTML =
-      `You achieved a perfect streak of <strong>${TARGET_STREAK}</strong> on <strong>${getLectureLabel(state.lectureId)}</strong>.`;
+     `You achieved a perfect streak of <strong>${TARGET_STREAK}</strong> on <strong>${getLectureLabel(state.moduleId, state.lectureId)}</strong>.`
     els.continueBtn.textContent = "Return to Menu";
     els.continueBtn.onclick = () => {
       resetToIntro();
@@ -114,7 +122,7 @@ function nextQuestion() {
   };
   els.actions.innerHTML = "";
 
-  const pool = getConceptPool(state.lectureId);
+  const pool = getConceptPool(state.moduleId, state.lectureId);
   if (!pool.length) {
     // No data for this lecture — bail gracefully.
     els.feedbackTitle.textContent = "NO DATA";
