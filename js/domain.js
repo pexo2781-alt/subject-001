@@ -4,7 +4,7 @@
 
 const state = {
   activeTab: 'domain', // 'domain' | 'degree'
-  activeView: 'select' // 'select' | 'mental' | 'degree-bio'
+  activeView: 'select' // 'select' | 'mental' | 'degree-bio' | 'degree-chem'
 };
 
 const els = {};
@@ -19,9 +19,11 @@ export function initDomain({ onExit } = {}) {
 
     drillsMental: document.getElementById('drills-mental'),
     drillsDegree: document.getElementById('drills-degree'),
+    drillsChem:   document.getElementById('drills-chem'),
 
     backMental: document.getElementById('back-mental'),
     backDegree: document.getElementById('back-degree'),
+    backChem:   document.getElementById('back-chem'),
 
     choices: Array.from(document.querySelectorAll('.domain-choice')),
     drillCards: Array.from(document.querySelectorAll('.drill-card')),
@@ -39,18 +41,20 @@ export function initDomain({ onExit } = {}) {
 
       if (domain === 'mental') setView('mental');
       if (degree === 'biology') setView('degree-bio');
+      if (degree === 'chemistry') setView('degree-chem');
     });
   });
 
   if (els.backMental) els.backMental.addEventListener('click', () => setView('select'));
   if (els.backDegree) els.backDegree.addEventListener('click', () => setView('select'));
+  if (els.backChem)   els.backChem.addEventListener('click', () => setView('select'));
 
   els.drillCards.forEach(card => {
     card.addEventListener('click', () => {
       if (card.classList.contains('is-locked')) return;
       if (card.disabled) return;
       const id = card.dataset.drill;
-      if (id) openDrill(id, card.dataset.lecture);
+      if (id) openDrill(id, card.dataset.module || 'biology', card.dataset.lecture);
     });
   });
 }
@@ -85,6 +89,7 @@ function setView(viewName) {
   if (els.viewDegree) els.viewDegree.classList.remove('is-active');
   if (els.drillsMental) els.drillsMental.classList.remove('is-active');
   if (els.drillsDegree) els.drillsDegree.classList.remove('is-active');
+  if (els.drillsChem)   els.drillsChem.classList.remove('is-active');
   document.querySelectorAll('.drill-view').forEach(el => el.classList.remove('is-active'));
 
   if (viewName === 'select') {
@@ -94,14 +99,17 @@ function setView(viewName) {
     if (els.drillsMental) els.drillsMental.classList.add('is-active');
   } else if (viewName === 'degree-bio') {
     if (els.drillsDegree) els.drillsDegree.classList.add('is-active');
+  } else if (viewName === 'degree-chem') {
+    if (els.drillsChem) els.drillsChem.classList.add('is-active');
   }
 }
 
-function openDrill(id, lectureId) {
+function openDrill(id, moduleId, lectureId) {
   if (els.topbar) els.topbar.style.display = 'none';
 
   if (els.drillsMental) els.drillsMental.classList.remove('is-active');
   if (els.drillsDegree) els.drillsDegree.classList.remove('is-active');
+  if (els.drillsChem)   els.drillsChem.classList.remove('is-active');
 
   if (id === 'number-memory') {
     if (typeof window.__nmReset === 'function') window.__nmReset();
@@ -120,9 +128,8 @@ function openDrill(id, lectureId) {
     const view = document.querySelector('[data-drill-view="chimp-test"]');
     if (view) view.classList.add('is-active');
   } else if (id === 'biology-test') {
-    // Tell the engine which lecture to run BEFORE resetting it.
     if (typeof window.__btSetLecture === 'function') {
-      window.__btSetLecture(lectureId || 'lecture1');
+      window.__btSetLecture(moduleId || 'biology', lectureId || 'lecture1');
     }
     if (typeof window.__btReset === 'function') window.__btReset();
     const view = document.querySelector('[data-drill-view="biology-test"]');
@@ -138,6 +145,8 @@ export function closeDrill() {
     if (els.drillsMental) els.drillsMental.classList.add('is-active');
   } else if (state.activeView === 'degree-bio') {
     if (els.drillsDegree) els.drillsDegree.classList.add('is-active');
+  } else if (state.activeView === 'degree-chem') {
+    if (els.drillsChem) els.drillsChem.classList.add('is-active');
   } else {
     setView('select');
   }
