@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="css/chimp-test.css">
   <link rel="stylesheet" href="css/biology-test.css">
   <link rel="stylesheet" href="css/cms.css">
+  <link rel="stylesheet" href="css/question-editor.css">
 </head>
 <body>
   <div class="bg-grid"></div>
@@ -89,7 +90,7 @@
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
         </button>
-        
+
         <nav class="domain-nav" id="domainNav">
           <button class="domain-tab is-active" data-tab="domain" type="button">
             <span class="domain-tab-label">Domain</span>
@@ -193,6 +194,41 @@
           </div>
 
           <div class="cms-list" id="lecturesList"></div>
+        </div>
+
+        <!-- ========== QUESTION EDITOR ========== -->
+        <div class="qe-view" id="view-questions">
+          <div class="qe-header">
+            <div class="qe-header-left">
+              <button class="domain-back" id="qeBackBtn" type="button">← Back</button>
+              <div>
+                <div class="qe-kicker" id="qeKicker">// QUESTIONS</div>
+                <div class="qe-title" id="qeTitle">Lecture</div>
+              </div>
+            </div>
+            <div class="qe-header-actions">
+              <button class="lab-btn cms-add-btn" id="qeAddBtn" type="button">+ New question</button>
+            </div>
+          </div>
+
+          <div class="qe-tabs">
+            <button class="qe-tab is-active" data-tab="questions" type="button">Questions</button>
+            <button class="qe-tab" data-tab="feedback" type="button">Feedback</button>
+          </div>
+
+          <div class="qe-panel is-active" id="qePanelQuestions">
+            <div class="qe-reorder-bar" id="qeReorderBar">
+              <span class="qe-reorder-hint" id="qeReorderHint">Select a question</span>
+              <div class="qe-reorder-actions">
+                <button class="cms-icon-btn" id="qeReorderDone" type="button">Done</button>
+              </div>
+            </div>
+            <div class="qe-list" id="qeList"></div>
+          </div>
+
+          <div class="qe-panel" id="qePanelFeedback">
+            <div id="qeFeedbackForm"></div>
+          </div>
         </div>
 
         <!-- Domain Drills (Mental) -->
@@ -512,7 +548,7 @@
       </section>
     </div>
 
-    <div class="lab-footer" id="labFooter">LAB · SUBJECT 001 · v0.50</div>
+    <div class="lab-footer" id="labFooter">LAB · SUBJECT 001 · v0.52</div>
   </div>
 
   <!-- Global toast used by CMS -->
