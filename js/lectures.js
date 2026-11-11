@@ -1,14 +1,9 @@
 // ============================================================
 // js/lectures.js — Lecture manager (per module)
-//
-// Features:
-//   - List lectures for a module
-//   - Add / rename / delete lectures
-//   - Reorder via select-then-swap OR up/down arrows
-//   - Play a lecture (opens the biology-test engine)
 // ============================================================
 
 import { getContent, mutateContent, onContentChange } from './content.js';
+import { openQuestionEditor } from './question-editor.js';
 
 const els = {};
 let currentModuleId = null;
@@ -47,18 +42,18 @@ export function openLectureManager(moduleId) {
   selectedLectureId = null;
 
   document.getElementById('view-modules')?.classList.remove('is-active');
-  document.getElementById('view-lectures')?.classList.add('is-active');
+  document.getElementById('view-questions')?.classList.remove('is-active');
+  els.view.classList.add('is-active');
 
   render();
 
-  // Subscribe to content changes while open
   if (unsubscribe) unsubscribe();
   unsubscribe = onContentChange(() => render());
 }
 
 function backToModules() {
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-  document.getElementById('view-lectures')?.classList.remove('is-active');
+  els.view.classList.remove('is-active');
   document.getElementById('view-modules')?.classList.add('is-active');
 }
 
@@ -106,15 +101,17 @@ function render() {
         <button class="cms-icon-btn is-danger" data-action="delete" title="Delete">🗑</button>
       </div>
       <div class="cms-item-actions">
+        <button class="cms-icon-btn" data-action="questions" title="Edit questions">✎✎</button>
         <button class="cms-icon-btn" data-action="play" title="Play">▶</button>
       </div>
     `;
 
     item.addEventListener('click', (e) => {
       const action = e.target.closest('[data-action]')?.dataset.action;
-      if (action === 'edit')   { e.stopPropagation(); openEditModal(lec); return; }
-      if (action === 'delete') { e.stopPropagation(); openDeleteConfirm(lec); return; }
-      if (action === 'play')   { e.stopPropagation(); playLecture(lec); return; }
+      if (action === 'edit')      { e.stopPropagation(); openEditModal(lec); return; }
+      if (action === 'delete')    { e.stopPropagation(); openDeleteConfirm(lec); return; }
+      if (action === 'play')      { e.stopPropagation(); playLecture(lec); return; }
+      if (action === 'questions') { e.stopPropagation(); openQuestionEditor(currentModuleId, lec.id); return; }
 
       if (selectedLectureId === lec.id) clearSelection();
       else selectLecture(lec.id);
@@ -172,14 +169,11 @@ function moveSelected(direction) {
     .catch(showError);
 }
 
-// ---------- Play ----------
-
 function playLecture(lec) {
   if (!lec.questions?.length) {
     showToast('This lecture has no questions yet', true);
     return;
   }
-  // Close managers, then hand off to domain.js which opens the engine
   document.getElementById('view-lectures')?.classList.remove('is-active');
   document.getElementById('view-modules')?.classList.remove('is-active');
   document.getElementById('view-degree')?.classList.remove('is-active');
@@ -187,17 +181,12 @@ function playLecture(lec) {
   if (typeof window.__btSetLecture === 'function') {
     window.__btSetLecture(currentModuleId, lec.id);
   }
-  if (typeof window.__btReset === 'function') {
-    window.__btReset();
-  }
+  if (typeof window.__btReset === 'function') window.__btReset();
   const view = document.querySelector('[data-drill-view="biology-test"]');
   if (view) view.classList.add('is-active');
-  // Hide topbar like domain.js does
   const topbar = document.getElementById('labTopbar');
   if (topbar) topbar.style.display = 'none';
 }
-
-// ---------- Add / Edit ----------
 
 function openAddModal() { openModal({ mode: 'add' }); }
 function openEditModal(lec) { openModal({ mode: 'edit', lecture: lec }); }
@@ -278,8 +267,6 @@ function renameLecture(lec, name) {
     .catch(showError);
 }
 
-// ---------- Delete ----------
-
 function openDeleteConfirm(lec) {
   const overlay = document.createElement('div');
   overlay.className = 'cms-modal-overlay is-open';
@@ -325,8 +312,6 @@ function deleteLecture(lec) {
     })
     .catch(showError);
 }
-
-// ---------- Helpers ----------
 
 function showToast(msg, isError = false) {
   if (!els.toast) return;
