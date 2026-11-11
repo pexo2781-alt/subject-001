@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="css/visual-memory.css">
   <link rel="stylesheet" href="css/chimp-test.css">
   <link rel="stylesheet" href="css/biology-test.css">
+  <link rel="stylesheet" href="css/cms.css">
 </head>
 <body>
   <div class="bg-grid"></div>
@@ -135,23 +136,63 @@
             <h2 class="domain-heading">Your Degree.</h2>
             <p class="domain-sub">Targeted retention drills for your university modules.</p>
             <div class="domain-list">
-              <button class="domain-choice" data-degree="biology" type="button">
+              <button class="domain-choice" data-degree="manage" type="button">
                 <span class="domain-choice-num">01</span>
-                <span class="domain-choice-name">Molecular Biology & Genetics</span>
-                <span class="domain-choice-tag">Ready</span>
-              </button>
-              <button class="domain-choice" data-degree="chemistry" type="button">
-                <span class="domain-choice-num">02</span>
-                <span class="domain-choice-name">Chemistry for the Biosciences</span>
-                <span class="domain-choice-tag">Ready</span>
-              </button>
-              <button class="domain-choice" type="button" disabled>
-                <span class="domain-choice-num">03</span>
-                <span class="domain-choice-name">Cell Biology</span>
-                <span class="domain-choice-tag">N/A</span>
+                <span class="domain-choice-name">Manage Degree Modules</span>
+                <span class="domain-choice-tag">CMS</span>
               </button>
             </div>
           </div>
+        </div>
+
+        <!-- ========== MODULE MANAGER ========== -->
+        <div class="cms-view" id="view-modules">
+          <div class="cms-header">
+            <div class="cms-header-left">
+              <button class="domain-back" id="modulesBackBtn" type="button">← Back</button>
+              <div>
+                <div class="cms-kicker">// DEGREE // MODULES</div>
+                <div class="cms-title">Manage Modules</div>
+              </div>
+            </div>
+            <button class="lab-btn cms-add-btn" id="modulesAddBtn" type="button">+ New</button>
+          </div>
+
+          <div class="cms-reorder-bar" id="modulesReorderBar" style="display:none;">
+            <span class="cms-reorder-hint" id="modulesReorderHint">Select a module to reorder</span>
+            <div class="cms-reorder-actions">
+              <button class="cms-icon-btn" id="modulesReorderUp" title="Move up">↑ Up</button>
+              <button class="cms-icon-btn" id="modulesReorderDown" title="Move down">↓ Down</button>
+              <button class="cms-icon-btn" id="modulesReorderDone" title="Done">Done</button>
+            </div>
+          </div>
+
+          <div class="cms-list" id="modulesList"></div>
+        </div>
+
+        <!-- ========== LECTURE MANAGER ========== -->
+        <div class="cms-view" id="view-lectures">
+          <div class="cms-header">
+            <div class="cms-header-left">
+              <button class="domain-back" id="lecturesBackBtn" type="button">← Back</button>
+              <div>
+                <div class="cms-kicker" id="lecturesKicker">// LECTURES</div>
+                <div class="cms-title" id="lecturesTitle">Lectures</div>
+              </div>
+            </div>
+            <button class="lab-btn cms-add-btn" id="lecturesAddBtn" type="button">+ New</button>
+          </div>
+
+          <div class="cms-reorder-bar" id="lecturesReorderBar" style="display:none;">
+            <span class="cms-reorder-hint" id="lecturesReorderHint">Select a lecture to reorder</span>
+            <div class="cms-reorder-actions">
+              <button class="cms-icon-btn" id="lecturesReorderUp" title="Move up">↑ Up</button>
+              <button class="cms-icon-btn" id="lecturesReorderDown" title="Move down">↓ Down</button>
+              <button class="cms-icon-btn" id="lecturesReorderDone" title="Done">Done</button>
+            </div>
+          </div>
+
+          <div class="cms-list" id="lecturesList"></div>
         </div>
 
         <!-- Domain Drills (Mental) -->
@@ -184,74 +225,6 @@
               <span class="drill-card-name">Chimp Test</span>
               <span class="drill-card-desc">Are you smarter than a chimpanzee?</span>
               <span class="drill-card-status">Ready</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Degree Drills (Biology) -->
-        <div class="domain-drills" id="drills-degree">
-          <div class="domain-drills-header">
-            <button class="domain-back" id="back-degree" type="button">← Back</button>
-            <span class="domain-drills-kicker">// BIOLOGY // GENETICS</span>
-          </div>
-          <div class="drill-grid">
-            <button class="drill-card is-ready" data-drill="biology-test" data-module="biology" data-lecture="lecture1" type="button">
-              <span class="drill-card-num">01</span>
-              <span class="drill-card-name">Lecture 1: Heredity & DNA</span>
-              <span class="drill-card-desc">The Central Dogma, Transformation, and the *Le* mutation.</span>
-              <span class="drill-card-status">Ready</span>
-            </button>
-            <button class="drill-card is-ready" data-drill="biology-test" data-module="biology" data-lecture="lecture2" type="button">
-              <span class="drill-card-num">02</span>
-              <span class="drill-card-name">Lecture 2: Structure of DNA & RNA</span>
-              <span class="drill-card-desc">Nucleotides, Chargaff's rules, the double helix, and the three types of RNA.</span>
-              <span class="drill-card-status">Ready</span>
-            </button>
-            <button class="drill-card is-locked" type="button" disabled>
-              <span class="drill-card-num">03</span>
-              <span class="drill-card-name">Lecture 3</span>
-              <span class="drill-card-desc">—</span>
-              <span class="drill-card-status">N/A</span>
-            </button>
-            <button class="drill-card is-locked" type="button" disabled>
-              <span class="drill-card-num">04</span>
-              <span class="drill-card-name">Lecture 4</span>
-              <span class="drill-card-desc">—</span>
-              <span class="drill-card-status">N/A</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Degree Drills (Chemistry) -->
-        <div class="domain-drills" id="drills-chem">
-          <div class="domain-drills-header">
-            <button class="domain-back" id="back-chem" type="button">← Back</button>
-            <span class="domain-drills-kicker">// CHEMISTRY // BIOSCIENCES</span>
-          </div>
-          <div class="drill-grid">
-            <button class="drill-card is-ready" data-drill="biology-test" data-module="chemistry" data-lecture="lecture1" type="button">
-              <span class="drill-card-num">01</span>
-              <span class="drill-card-name">Chem L1: Atomic Structure</span>
-              <span class="drill-card-desc">Subatomic particles, isotopes, electron shells, and the periodic table.</span>
-              <span class="drill-card-status">Ready</span>
-            </button>
-            <button class="drill-card is-locked" type="button" disabled>
-              <span class="drill-card-num">02</span>
-              <span class="drill-card-name">Chem L2</span>
-              <span class="drill-card-desc">—</span>
-              <span class="drill-card-status">N/A</span>
-            </button>
-            <button class="drill-card is-locked" type="button" disabled>
-              <span class="drill-card-num">03</span>
-              <span class="drill-card-name">Chem L3</span>
-              <span class="drill-card-desc">—</span>
-              <span class="drill-card-status">N/A</span>
-            </button>
-            <button class="drill-card is-locked" type="button" disabled>
-              <span class="drill-card-num">04</span>
-              <span class="drill-card-name">Chem L4</span>
-              <span class="drill-card-desc">—</span>
-              <span class="drill-card-status">N/A</span>
             </button>
           </div>
         </div>
@@ -453,8 +426,6 @@
 
         <!-- ========== BIOLOGY TEST ENGINE ========== -->
         <div class="drill-view" id="view-biology-test" data-drill-view="biology-test">
-          
-          <!-- Stage 1: Question -->
           <div class="bt-stage is-active" id="btStageQuestion">
             <div class="bt-view">
               <div class="bt-header" id="btHeader">
@@ -473,7 +444,6 @@
             </div>
           </div>
 
-          <!-- Stage 2: Feedback -->
           <div class="bt-stage" id="btStageFeedback">
             <div class="bt-view">
               <div class="bt-feedback-card" id="btFeedbackCard">
@@ -483,7 +453,6 @@
               </div>
             </div>
           </div>
-
         </div>
 
       </div>
@@ -543,8 +512,11 @@
       </section>
     </div>
 
-    <div class="lab-footer" id="labFooter">LAB · SUBJECT 001 · v0.40</div>
+    <div class="lab-footer" id="labFooter">LAB · SUBJECT 001 · v0.50</div>
   </div>
+
+  <!-- Global toast used by CMS -->
+  <div class="cms-toast" id="cmsToast"></div>
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="js/supabase-client.js"></script>
