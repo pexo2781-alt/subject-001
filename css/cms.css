@@ -1,0 +1,378 @@
+/* ============================================================
+   CMS — Module & Lecture managers
+   ============================================================ */
+
+.cms-view {
+  display: none !important;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+  animation: fadeSlideUp 0.4s cubic-bezier(0.2, 0.9, 0.4, 1);
+}
+
+.cms-view.is-active {
+  display: flex !important;
+}
+
+/* ---------- Header ---------- */
+.cms-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+}
+
+.cms-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.cms-title {
+  font-family: var(--font-accent);
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cms-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.cms-add-btn {
+  flex-shrink: 0;
+  padding: 0.6rem 1rem !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.15em !important;
+  white-space: nowrap;
+}
+
+/* ---------- List ---------- */
+.cms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 1rem;
+}
+
+.cms-item {
+  display: grid;
+  grid-template-columns: 2.25rem 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  background: transparent;
+  border: 1px solid var(--text-dim);
+  padding: 1rem 1.1rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  border-radius: 0;
+}
+
+.cms-item:hover {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.03);
+}
+
+.cms-item.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.15);
+}
+
+.cms-item-num {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.15em;
+  text-align: center;
+}
+
+.cms-item-name {
+  font-family: var(--font-accent);
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cms-item-sub {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  margin-top: 0.2rem;
+}
+
+.cms-item-actions {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.cms-icon-btn {
+  background: transparent;
+  border: 1px solid var(--text-dim);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 0;
+  font-size: 0.85rem;
+  transition: all var(--transition);
+  padding: 0;
+}
+
+.cms-icon-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.cms-icon-btn.is-danger:hover {
+  border-color: #ff5555;
+  color: #ff5555;
+  background: rgba(255, 85, 85, 0.08);
+}
+
+.cms-icon-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.cms-icon-btn:disabled:hover {
+  border-color: var(--text-dim);
+  color: var(--text-muted);
+  background: transparent;
+}
+
+/* ---------- Empty state ---------- */
+.cms-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 1rem;
+  text-align: center;
+  flex: 1;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.cms-empty-title {
+  font-family: var(--font-accent);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ---------- Modal (add/edit) ---------- */
+.cms-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: overlayFadeIn 0.25s ease;
+}
+
+.cms-modal-overlay.is-open {
+  display: flex;
+}
+
+.cms-modal {
+  background: var(--panel-bg);
+  border: 1px solid var(--text-dim);
+  padding: 2rem;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: 0 0 60px rgba(var(--text-rgb), 0.15);
+  animation: settingsFadeIn 0.3s cubic-bezier(0.2, 0.9, 0.4, 1);
+}
+
+.cms-modal-title {
+  font-family: var(--font-accent);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cms-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cms-modal-field label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cms-modal-field input,
+.cms-modal-field select {
+  background: transparent;
+  border: 1px solid var(--text-dim);
+  padding: 0.75rem 0.9rem;
+  font-family: var(--font-main);
+  font-size: 0.95rem;
+  color: var(--text);
+  outline: none;
+  border-radius: 0;
+  width: 100%;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.cms-modal-field input:focus,
+.cms-modal-field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.15);
+}
+
+.cms-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.cms-modal-actions .lab-btn {
+  flex: 1;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.8rem !important;
+}
+
+/* ---------- Reorder controls ---------- */
+.cms-reorder-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px dashed var(--text-dim);
+  background: rgba(var(--accent-rgb), 0.02);
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
+}
+
+.cms-reorder-hint {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cms-reorder-hint.is-active {
+  color: var(--accent);
+}
+
+.cms-reorder-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.cms-reorder-actions .cms-icon-btn {
+  width: auto;
+  padding: 0 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ---------- Confirm dialog (reuses modal) ---------- */
+.cms-modal.is-confirm {
+  max-width: 420px;
+}
+
+.cms-confirm-text {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.cms-confirm-text strong {
+  color: var(--text);
+}
+
+/* ---------- Toast ---------- */
+.cms-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--panel-bg);
+  border: 1px solid var(--accent);
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-transform: uppercase;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.2);
+}
+
+.cms-toast.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.cms-toast.is-error {
+  border-color: #ff5555;
+  color: #ff5555;
+  box-shadow: 0 0 30px rgba(255, 85, 85, 0.2);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .cms-item {
+    grid-template-columns: 1.75rem 1fr auto;
+    padding: 0.85rem 0.9rem;
+  }
+  .cms-item-actions .cms-icon-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+  .cms-add-btn {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.7rem !important;
+  }
+}
