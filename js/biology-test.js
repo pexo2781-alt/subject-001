@@ -1,18 +1,17 @@
-import { getConceptPool, getLectureLabel } from './data/index.js';
+import { getContent, onContentChange } from './content.js';
 import { closeDrill } from './domain.js';
 
-const TARGET_STREAK = 8;
+const WRONG_LIMIT = 3;
 
 const state = {
   running: false,
-  moduleId: 'biology',
-  lectureId: 'lecture1',   // set before reset via window.__btSetLecture(id)
-  streak: 0,
-  correctCount: 0,
+  moduleId: null,
+  lectureId: null,
+  lecture: null,
+  questions: [],          // ordered copy
+  index: 0,
   wrongCount: 0,
-  currentQuestion: null,
-  currentConcept: null,
-  reviewQueue: [],
+  answeredThisRun: new Set(),
   isAnswered: false
 };
 
@@ -20,11 +19,9 @@ const els = {};
 
 export function initBiologyTest() {
   Object.assign(els, {
-    // Stages
     stageQuestion: document.getElementById('btStageQuestion'),
     stageFeedback: document.getElementById('btStageFeedback'),
 
-    // Question Elements
     prompt: document.getElementById('btPrompt'),
     content: document.getElementById('btContent'),
     actions: document.getElementById('btActions'),
@@ -33,7 +30,6 @@ export function initBiologyTest() {
     statWrong: document.getElementById('btStatWrong'),
     exitBtn: document.getElementById('btExitBtn'),
 
-    // Feedback Elements
     feedbackTitle: document.getElementById('btFeedbackTitle'),
     feedbackText: document.getElementById('btFeedbackText'),
     continueBtn: document.getElementById('btContinueBtn')
@@ -42,145 +38,109 @@ export function initBiologyTest() {
   if (!els.stageQuestion) return;
 
   els.exitBtn.addEventListener('click', () => {
-    resetToIntro();
+    reset();
     closeDrill();
   });
 
-  els.continueBtn.addEventListener('click', () => {
-    showStage('question');
-    nextQuestion();
-  });
+  els.continueBtn.addEventListener('click', onContinue);
 
-  resetToIntro();
+  reset();
 }
 
-/** Set which lecture (or 'all') the next session should use. */
 export function setActiveLecture(moduleId, lectureId) {
-  // Support both call styles: setActiveLecture('biology','lecture1')
-  // AND setActiveLecture('lecture1') → legacy call from domain.js
   if (lectureId === undefined) {
     lectureId = moduleId;
-    moduleId = 'biology';
+    moduleId = null;
   }
-  state.moduleId = moduleId || 'biology';
-  state.lectureId = lectureId || 'lecture1';
+  state.moduleId = moduleId;
+  state.lectureId = lectureId;
 }
 
-export function resetToIntro() {
-  state.running = true;
-  state.streak = 0;
-  state.correctCount = 0;
+export function reset() {
+  state.running = false;
+  state.questions = [];
+  state.index = 0;
   state.wrongCount = 0;
-  state.reviewQueue = [];
+  state.answeredThisRun = new Set();
   state.isAnswered = false;
 
-  // Make sure the view is active
   const view = document.getElementById('view-biology-test');
   if (view) view.classList.add('is-active');
 
   updateStats();
   showStage('question');
-  nextQuestion();
+  startSession();
 }
 
-function showStage(name) {
-  if (name === 'question') {
-    els.stageQuestion.classList.add('is-active');
-    els.stageFeedback.classList.remove('is-active');
-  } else {
-    els.stageQuestion.classList.remove('is-active');
-    els.stageFeedback.classList.add('is-active');
-  }
-}
-
-function updateStats() {
-  if (els.statStreak) els.statStreak.textContent = `${state.streak} / ${TARGET_STREAK}`;
-  if (els.statCorrect) els.statCorrect.textContent = state.correctCount;
-  if (els.statWrong) els.statWrong.textContent = state.wrongCount;
-}
-
-function nextQuestion() {
-  const TOTAL_WRONG_LIMIT = 3;
-
-// in handleResult:
-if (!isCorrect) {
-  state.wrongCount++;
-  if (state.wrongCount >= TOTAL_WRONG_LIMIT) {
-    showFailScreen();
+function startSession() {
+  const lecture = findLecture(state.moduleId, state.lectureId);
+  if (!lecture) {
+    showFatal('Lecture not found', 'The lecture you tried to open does not exist.');
     return;
   }
+  if (!lecture.questions?.length) {
+    showFatal('No questions', 'This lecture has no questions yet.');
+    return;
+  }
+
+  state.lecture = lecture;
+  state.questions = shuffle([...lecture.questions]);
+  state.index = 0;
+  state.wrongCount = 0;
+  state.answeredThisRun = new Set();
+  state.running = true;
+
+  updateStats();
+  renderCurrent();
 }
 
-// after every correct answer, check win:
-if (state.correctCount === totalQuestionsInLecture && state.wrongCount < TOTAL_WRONG_LIMIT) {
-  showWinScreen();
+function findLecture(moduleId, lectureId) {
+  const { modules } = getContent();
+  for (const mod of modules) {
+    if (moduleId && mod.id !== moduleId) continue;
+    const lec = mod.lectures?.find(l => l.id === lectureId);
+    if (lec) return lec;
+  }
+  // Fallback: search all modules if moduleId mismatch
+  for (const mod of modules) {
+    const lec = mod.lectures?.find(l => l.id === lectureId);
+    if (lec) return lec;
+  }
+  return null;
 }
-    // WIN STATE
-    els.feedbackTitle.textContent = "TEST PASSED";
-    els.feedbackTitle.className = "bt-feedback-title is-correct";
-    els.feedbackText.innerHTML =
-     `You achieved a perfect streak of <strong>${TARGET_STREAK}</strong> on <strong>${getLectureLabel(state.moduleId, state.lectureId)}</strong>.`
-    els.continueBtn.textContent = "Return to Menu";
-    els.continueBtn.onclick = () => {
-      resetToIntro();
-      closeDrill();
-    };
-    showStage('feedback');
+
+function renderCurrent() {
+  if (!state.running) return;
+  if (state.index >= state.questions.length) {
+    // If we've cycled through all and every question was answered correctly at least once, win.
+    if (state.wrongCount < WRONG_LIMIT && state.answeredThisRun.size === state.questions.length) {
+      showWin();
+    } else {
+      showFatal('Unexpected state', 'Session ended unexpectedly.');
+    }
     return;
   }
 
   state.isAnswered = false;
-  els.continueBtn.onclick = () => {
-    showStage('question');
-    nextQuestion();
-  };
-  els.actions.innerHTML = "";
-
-  const pool = getConceptPool(state.moduleId, state.lectureId);
-  if (!pool.length) {
-    // No data for this lecture — bail gracefully.
-    els.feedbackTitle.textContent = "NO DATA";
-    els.feedbackTitle.className = "bt-feedback-title is-wrong";
-    els.feedbackText.innerHTML = `No concepts found for <strong>${getLectureLabel(state.lectureId)}</strong>.`;
-    els.continueBtn.textContent = "Return to Menu";
-    els.continueBtn.onclick = () => {
-      resetToIntro();
-      closeDrill();
-    };
-    showStage('feedback');
-    return;
-  }
-
-  if (state.reviewQueue.length > 0) {
-    state.currentConcept = state.reviewQueue.shift();
-    state.currentQuestion = pickRandom(state.currentConcept.questions);
-  } else {
-    state.currentConcept = pickRandom(pool);
-    state.currentQuestion = pickRandom(state.currentConcept.questions);
-  }
-
-  renderQuestion();
-}
-
-function renderQuestion() {
-  const q = state.currentQuestion;
+  const q = state.questions[state.index];
   els.prompt.textContent = q.prompt;
   els.content.innerHTML = '';
-
-  if (q.type === 'typed' || q.type === 'fill') {
-    renderTyped(q);
-  } else if (q.type === 'mcq') {
-    renderMCQ(q);
-  } else if (q.type === 'tf') {
-    renderTF(q);
-  } else if (q.type === 'sequence') {
-    renderSequence(q);
-  } else if (q.type === 'match') {
-    renderMatch(q);
-  }
+  els.actions.innerHTML = '';
+  renderByType(q);
+  showStage('question');
 }
 
-// --- RENDERERS ---
+function renderByType(q) {
+  switch (q.type) {
+    case 'typed':
+    case 'fill':     return renderTyped(q);
+    case 'mcq':      return renderMCQ(q);
+    case 'tf':       return renderTF(q);
+    case 'sequence': return renderSequence(q);
+    case 'match':    return renderMatch(q);
+    default:         return renderTyped(q);
+  }
+}
 
 function renderTyped(q) {
   const input = document.createElement('input');
@@ -193,294 +153,311 @@ function renderTyped(q) {
   btn.className = 'lab-btn bt-submit-btn';
   btn.textContent = 'Submit';
   btn.onclick = () => checkTyped(q, input.value);
-
-  input.onkeydown = (e) => {
-    if (e.key === 'Enter') checkTyped(q, input.value);
-  };
+  input.onkeydown = e => { if (e.key === 'Enter') checkTyped(q, input.value); };
 
   els.content.appendChild(input);
   els.actions.appendChild(btn);
-  setTimeout(() => input.focus(), 100);
+  setTimeout(() => input.focus(), 60);
 }
 
 function renderMCQ(q) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'bt-options';
-
-  q.options.forEach((opt, index) => {
-    const btn = document.createElement('button');
-    btn.className = 'bt-option-btn';
-    btn.textContent = opt;
-    btn.onclick = () => checkMCQ(q, index, wrapper);
-    wrapper.appendChild(btn);
+  const wrap = document.createElement('div');
+  wrap.className = 'bt-options';
+  q.options.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'bt-option-btn';
+    b.textContent = opt;
+    b.onclick = () => checkMCQ(q, i, wrap);
+    wrap.appendChild(b);
   });
-
-  els.content.appendChild(wrapper);
+  els.content.appendChild(wrap);
 }
 
 function renderTF(q) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'bt-tf-row';
-
-  const tBtn = document.createElement('button');
-  tBtn.className = 'bt-option-btn';
-  tBtn.textContent = 'True';
-  tBtn.onclick = () => handleTFSelection(true, q, wrapper);
-
-  const fBtn = document.createElement('button');
-  fBtn.className = 'bt-option-btn';
-  fBtn.textContent = 'False';
-  fBtn.onclick = () => handleTFSelection(false, q, wrapper);
-
-  wrapper.appendChild(tBtn);
-  wrapper.appendChild(fBtn);
-  els.content.appendChild(wrapper);
+  const wrap = document.createElement('div');
+  wrap.className = 'bt-tf-row';
+  const t = document.createElement('button');
+  t.className = 'bt-option-btn'; t.textContent = 'True';
+  t.onclick = () => handleTF(true, q, wrap);
+  const f = document.createElement('button');
+  f.className = 'bt-option-btn'; f.textContent = 'False';
+  f.onclick = () => handleTF(false, q, wrap);
+  wrap.appendChild(t); wrap.appendChild(f);
+  els.content.appendChild(wrap);
 }
 
-function handleTFSelection(val, q, wrapper) {
+function handleTF(val, q, wrap) {
   if (val !== q.answer) {
-    handleResult(false, "Incorrect. The statement is False.", q.explanation);
+    finishAnswer(false, q.feedbackTitle || 'Incorrect. The statement is False.', q.explanation, q);
     return;
   }
-
-  wrapper.style.display = 'none';
-
-  const reasonBox = document.createElement('div');
-  reasonBox.className = 'bt-reason-box';
-
-  const reasons = [q.reason, ...q.wrong_reasons].sort(() => Math.random() - 0.5);
-
+  wrap.style.display = 'none';
+  const box = document.createElement('div');
+  box.className = 'bt-reason-box';
+  const reasons = shuffle([q.reason, ...(q.wrong_reasons || [])]);
   reasons.forEach(r => {
-    const btn = document.createElement('button');
-    btn.className = 'bt-option-btn';
-    btn.textContent = r;
-    btn.onclick = () => {
-      if (r === q.reason) {
-        handleResult(true, "Correct.", q.explanation);
-      } else {
-        handleResult(false, "Incorrect reason.", q.explanation);
-      }
+    const b = document.createElement('button');
+    b.className = 'bt-option-btn';
+    b.textContent = r;
+    b.onclick = () => {
+      const ok = r === q.reason;
+      finishAnswer(ok, ok ? (q.feedbackTitle || 'Correct.') : 'Incorrect reason.', q.explanation, q);
     };
-    reasonBox.appendChild(btn);
+    box.appendChild(b);
   });
-
-  els.content.appendChild(reasonBox);
+  els.content.appendChild(box);
 }
 
 function renderSequence(q) {
-  const shuffled = [...q.steps].sort(() => Math.random() - 0.5);
-  const container = document.createElement('div');
-  container.className = 'bt-seq-container';
+  const items = shuffle([...q.steps]);
+  const c = document.createElement('div');
+  c.className = 'bt-seq-container';
+  let selected = null;
 
-  let selectedItem = null;
-
-  const refreshNumbers = () => {
-    Array.from(container.children).forEach((el, i) => {
+  const renumber = () => {
+    Array.from(c.children).forEach((el, i) => {
       el.querySelector('.bt-seq-num').textContent = `${i + 1}.`;
     });
   };
-
-  const moveItem = (item, direction) => {
-    const parent = item.parentNode;
-    if (direction === 'up' && item.previousElementSibling) {
-      parent.insertBefore(item, item.previousElementSibling);
-    } else if (direction === 'down' && item.nextElementSibling) {
-      parent.insertBefore(item.nextElementSibling, item);
-    }
-    refreshNumbers();
+  const move = (item, dir) => {
+    const p = item.parentNode;
+    if (dir === 'up' && item.previousElementSibling) p.insertBefore(item, item.previousElementSibling);
+    if (dir === 'down' && item.nextElementSibling) p.insertBefore(item.nextElementSibling, item);
+    renumber();
   };
 
-  shuffled.forEach((step, index) => {
+  items.forEach((step, idx) => {
     const item = document.createElement('div');
     item.className = 'bt-seq-item';
     item.innerHTML = `
-      <span class="bt-seq-num">${index + 1}.</span>
+      <span class="bt-seq-num">${idx + 1}.</span>
       <span class="bt-seq-text">${step}</span>
       <div class="bt-seq-arrows">
         <button class="bt-seq-arrow" data-dir="up">▲</button>
         <button class="bt-seq-arrow" data-dir="down">▼</button>
-      </div>
-    `;
+      </div>`;
 
     item.onclick = (e) => {
       if (e.target.classList.contains('bt-seq-arrow')) return;
-
-      if (selectedItem === item) {
-        item.classList.remove('is-selected');
-        selectedItem = null;
-      } else if (selectedItem) {
-        selectedItem.classList.remove('is-selected');
+      if (selected === item) { item.classList.remove('is-selected'); selected = null; }
+      else if (selected) {
+        selected.classList.remove('is-selected');
         const parent = item.parentNode;
         const itemNext = item.nextSibling;
-        const selNext = selectedItem.nextSibling;
-
-        parent.insertBefore(selectedItem, itemNext);
+        const selNext = selected.nextSibling;
+        parent.insertBefore(selected, itemNext);
         parent.insertBefore(item, selNext);
-
-        refreshNumbers();
-        selectedItem = null;
-      } else {
-        item.classList.add('is-selected');
-        selectedItem = item;
-      }
+        renumber();
+        selected = null;
+      } else { item.classList.add('is-selected'); selected = item; }
     };
 
     item.querySelectorAll('.bt-seq-arrow').forEach(btn => {
       btn.onclick = (e) => {
         e.stopPropagation();
-        if (selectedItem) {
-          selectedItem.classList.remove('is-selected');
-          selectedItem = null;
-        }
-        moveItem(item, btn.dataset.dir);
+        if (selected) { selected.classList.remove('is-selected'); selected = null; }
+        move(item, btn.dataset.dir);
       };
     });
 
-    container.appendChild(item);
+    c.appendChild(item);
   });
 
-  els.content.appendChild(container);
+  els.content.appendChild(c);
 
   const btn = document.createElement('button');
   btn.className = 'lab-btn bt-submit-btn';
   btn.textContent = 'Submit Order';
   btn.onclick = () => {
-    // Trim + lowercase both sides so invisible whitespace can't break the check.
-    const currentOrder = Array.from(container.children).map(el =>
-      el.querySelector('.bt-seq-text').textContent.trim().toLowerCase()
-    );
-    const expectedOrder = q.steps.map(step => String(step).trim().toLowerCase());
-
-    const isCorrect = currentOrder.length === expectedOrder.length &&
-      currentOrder.every((val, index) => val === expectedOrder[index]);
-
-    if (isCorrect) {
-      handleResult(true, "Correct.", q.explanation);
-    } else {
-      handleResult(false, "Incorrect order.", q.explanation);
-    }
+    const cur = Array.from(c.children).map(el => el.querySelector('.bt-seq-text').textContent.trim().toLowerCase());
+    const exp = q.steps.map(s => String(s).trim().toLowerCase());
+    const ok = cur.length === exp.length && cur.every((v, i) => v === exp[i]);
+    finishAnswer(ok, ok ? (q.feedbackTitle || 'Correct.') : 'Incorrect order.', q.explanation, q);
   };
   els.actions.appendChild(btn);
 }
 
 function renderMatch(q) {
-  const leftItems = q.pairs.map(p => p.left).sort(() => Math.random() - 0.5);
-  const rightItems = q.pairs.map(p => p.right).sort(() => Math.random() - 0.5);
+  const left = shuffle(q.pairs.map(p => p.left));
+  const right = shuffle(q.pairs.map(p => p.right));
+  const wrap = document.createElement('div');
+  wrap.className = 'bt-match-container';
+  const colL = document.createElement('div'); colL.className = 'bt-match-col';
+  const colR = document.createElement('div'); colR.className = 'bt-match-col';
+  let selLeft = null;
 
-  const wrapper = document.createElement('div');
-  wrapper.className = 'bt-match-container';
-
-  const colL = document.createElement('div');
-  colL.className = 'bt-match-col';
-  const colR = document.createElement('div');
-  colR.className = 'bt-match-col';
-
-  let selectedLeft = null;
-
-  leftItems.forEach(text => {
-    const btn = document.createElement('button');
-    btn.className = 'bt-match-btn';
-    btn.textContent = text;
-    btn.onclick = () => {
-      if (btn.classList.contains('is-matched')) return;
-      colL.querySelectorAll('.bt-match-btn').forEach(b => b.classList.remove('is-selected'));
-      btn.classList.add('is-selected');
-      selectedLeft = btn;
+  left.forEach(text => {
+    const b = document.createElement('button');
+    b.className = 'bt-match-btn'; b.textContent = text;
+    b.onclick = () => {
+      if (b.classList.contains('is-matched')) return;
+      colL.querySelectorAll('.bt-match-btn').forEach(x => x.classList.remove('is-selected'));
+      b.classList.add('is-selected'); selLeft = b;
     };
-    colL.appendChild(btn);
+    colL.appendChild(b);
   });
 
-  rightItems.forEach(text => {
-    const btn = document.createElement('button');
-    btn.className = 'bt-match-btn';
-    btn.textContent = text;
-    btn.onclick = () => {
-      if (btn.classList.contains('is-matched')) return;
-      if (!selectedLeft) return;
-
-      const leftText = selectedLeft.textContent;
-      const rightText = text;
-
-      const pair = q.pairs.find(p => p.left === leftText && p.right === rightText);
-
+  right.forEach(text => {
+    const b = document.createElement('button');
+    b.className = 'bt-match-btn'; b.textContent = text;
+    b.onclick = () => {
+      if (b.classList.contains('is-matched')) return;
+      if (!selLeft) return;
+      const pair = q.pairs.find(p => p.left === selLeft.textContent && p.right === text);
       if (pair) {
-        selectedLeft.classList.remove('is-selected');
-        selectedLeft.classList.add('is-matched');
-        btn.classList.add('is-matched');
-        selectedLeft = null;
-
+        selLeft.classList.remove('is-selected');
+        selLeft.classList.add('is-matched');
+        b.classList.add('is-matched');
+        selLeft = null;
         if (colL.querySelectorAll('.is-matched').length === q.pairs.length) {
-          handleResult(true, "Correct.", q.explanation);
+          finishAnswer(true, q.feedbackTitle || 'Correct.', q.explanation, q);
         }
       } else {
-        handleResult(false, "Incorrect match.", q.explanation);
+        finishAnswer(false, 'Incorrect match.', q.explanation, q);
       }
     };
-    colR.appendChild(btn);
+    colR.appendChild(b);
   });
 
-  wrapper.appendChild(colL);
-  wrapper.appendChild(colR);
-  els.content.appendChild(wrapper);
+  wrap.appendChild(colL); wrap.appendChild(colR);
+  els.content.appendChild(wrap);
 }
 
 function checkTyped(q, val) {
   if (state.isAnswered) return;
-  const cleanVal = val.trim().toLowerCase();
-  if (!cleanVal) return;
-
-  const validAnswers = [q.answer, ...(q.accept || [])]
-    .filter(a => a != null)
-    .map(a => String(a).toLowerCase().trim());
-
-  if (validAnswers.includes(cleanVal)) {
-    handleResult(true, "Correct.", q.explanation);
-  } else {
-    handleResult(false, `Incorrect. The expected answer was: ${q.answer}`, q.explanation);
-  }
+  const clean = String(val).trim().toLowerCase();
+  if (!clean) return;
+  const valid = [q.answer, ...(q.accept || [])].filter(a => a != null).map(a => String(a).trim().toLowerCase());
+  const ok = valid.includes(clean);
+  finishAnswer(ok, ok ? (q.feedbackTitle || 'Correct.') : `Incorrect. Expected: ${q.answer}`, q.explanation, q);
 }
 
-function checkMCQ(q, selectedIdx, wrapper) {
+function checkMCQ(q, idx, wrap) {
   if (state.isAnswered) return;
-  const btns = wrapper.querySelectorAll('.bt-option-btn');
-
-  if (selectedIdx === q.answer) {
-    btns[selectedIdx].classList.add('is-correct');
-    handleResult(true, "Correct.", q.explanation);
+  const btns = wrap.querySelectorAll('.bt-option-btn');
+  if (idx === q.answer) {
+    btns[idx].classList.add('is-correct');
+    finishAnswer(true, q.feedbackTitle || 'Correct.', q.explanation, q);
   } else {
-    btns[selectedIdx].classList.add('is-wrong');
-    btns[q.answer].classList.add('is-correct');
-    handleResult(false, `Incorrect. The correct answer was: ${q.options[q.answer]}`, q.explanation);
+    btns[idx].classList.add('is-wrong');
+    if (btns[q.answer]) btns[q.answer].classList.add('is-correct');
+    finishAnswer(false, `Incorrect. Correct answer: ${q.options[q.answer]}`, q.explanation, q);
   }
 }
 
-function handleResult(isCorrect, title, explanation) {
+/** Called by every question type when answered. */
+function finishAnswer(isCorrect, title, explanation, q) {
   if (state.isAnswered) return;
   state.isAnswered = true;
 
   if (isCorrect) {
-    state.streak++;
-    state.correctCount++;
+    state.answeredThisRun.add(q.id);
   } else {
-    state.streak = 0;
     state.wrongCount++;
-    state.reviewQueue.push(state.currentConcept);
+    // Re-queue this question at the end so it must be answered correctly before finishing.
+    state.questions.push(q);
   }
 
   updateStats();
 
-  els.feedbackTitle.textContent = title;
-  els.feedbackTitle.className = isCorrect ? "bt-feedback-title is-correct" : "bt-feedback-title is-wrong";
-  els.feedbackText.innerHTML = `<strong>Explanation:</strong> ${explanation || 'No explanation provided.'}`;
-  els.continueBtn.textContent = "Continue";
+  const fb = state.lecture?.feedback || {};
+  const showExplanation = fb.showExplanation !== false;
+  const headline = title || (isCorrect ? (fb.correctTitle || 'Correct.') : (fb.incorrectTitle || 'Incorrect.'));
+
+  els.feedbackTitle.textContent = headline;
+  els.feedbackTitle.className = isCorrect ? 'bt-feedback-title is-correct' : 'bt-feedback-title is-wrong';
+
+  if (showExplanation && explanation) {
+    els.feedbackText.innerHTML = `<strong>Explanation:</strong> ${escapeHtml(explanation)}`;
+  } else {
+    els.feedbackText.innerHTML = '';
+  }
+
+  if (state.wrongCount >= WRONG_LIMIT) {
+    els.continueBtn.textContent = 'See result';
+  } else {
+    els.continueBtn.textContent = 'Continue';
+  }
 
   showStage('feedback');
 }
 
-function pickRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+function onContinue() {
+  if (state.wrongCount >= WRONG_LIMIT) {
+    showFail();
+    return;
+  }
+  state.index++;
+  renderCurrent();
 }
 
-// Global hooks used by domain.js
-window.__btReset = resetToIntro;
+function updateStats() {
+  const total = state.questions.length;
+  const answeredCorrect = state.answeredThisRun.size;
+  if (els.statStreak) els.statStreak.textContent = `${answeredCorrect} / ${total}`;
+  if (els.statCorrect) els.statCorrect.textContent = answeredCorrect;
+  if (els.statWrong) els.statWrong.textContent = `${state.wrongCount} / ${WRONG_LIMIT}`;
+}
+
+function showStage(name) {
+  if (name === 'question') {
+    els.stageQuestion.classList.add('is-active');
+    els.stageFeedback.classList.remove('is-active');
+  } else {
+    els.stageQuestion.classList.remove('is-active');
+    els.stageFeedback.classList.add('is-active');
+  }
+}
+
+function showWin() {
+  state.running = false;
+  const fb = state.lecture?.feedback || {};
+  els.feedbackTitle.textContent = fb.winTitle || 'LECTURE PASSED';
+  els.feedbackTitle.className = 'bt-feedback-title is-correct';
+  els.feedbackText.innerHTML =
+    `All <strong>${state.questions.length}</strong> questions answered correctly` +
+    (state.wrongCount ? ` with <strong>${state.wrongCount}</strong> wrong attempt${state.wrongCount === 1 ? '' : 's'}.` : '.');
+  els.continueBtn.textContent = 'Return to Menu';
+  els.continueBtn.onclick = () => { reset(); closeDrill(); };
+  showStage('feedback');
+}
+
+function showFail() {
+  state.running = false;
+  const fb = state.lecture?.feedback || {};
+  els.feedbackTitle.textContent = fb.failTitle || 'LECTURE FAILED';
+  els.feedbackTitle.className = 'bt-feedback-title is-wrong';
+  els.feedbackText.innerHTML =
+    `You reached the limit of <strong>${WRONG_LIMIT}</strong> wrong answers. Try again.`;
+  els.continueBtn.textContent = 'Retry';
+  els.continueBtn.onclick = () => { reset(); };
+  showStage('feedback');
+}
+
+function showFatal(title, msg) {
+  state.running = false;
+  els.feedbackTitle.textContent = title;
+  els.feedbackTitle.className = 'bt-feedback-title is-wrong';
+  els.feedbackText.textContent = msg;
+  els.continueBtn.textContent = 'Return to Menu';
+  els.continueBtn.onclick = () => { reset(); closeDrill(); };
+  showStage('feedback');
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+window.__btReset = reset;
 window.__btSetLecture = setActiveLecture;
