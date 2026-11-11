@@ -8,6 +8,8 @@ import { initSequenceMemory } from './sequence-memory.js';
 import { initVisualMemory } from './visual-memory.js';
 import { initChimpTest } from './chimp-test.js';
 import { initBiologyTest } from './biology-test.js';
+import { initModules } from './modules.js';          // ← NEW
+import { initLectures } from './lectures.js';        // ← NEW
 import { loadContent, onContentChange } from './content.js';
 
 const views = {
@@ -46,10 +48,8 @@ async function enterLab(session) {
   console.log('[lab] authenticated as', session?.user?.email);
   closeSettings();
 
-  // Load content from Supabase (or seed on first login)
-  try {
-    await loadContent();
-  } catch (e) {
+  try { await loadContent(); }
+  catch (e) {
     console.error('[lab] content load failed', e);
     alert('Could not load your content from the server. Check your connection and try again.');
     return;
@@ -73,13 +73,13 @@ async function boot() {
   initVisualMemory();
   initChimpTest();
   initBiologyTest();
+  initModules();      // ← NEW
+  initLectures();     // ← NEW
 
   try { await waitFor(() => !!window.SB); }
   catch (e) { console.warn('[lab] window.SB not available yet.'); }
 
-  initAuth({
-    onSuccess: (session) => { enterLab(session); }
-  });
+  initAuth({ onSuccess: (session) => { enterLab(session); } });
 
   const startBtn = document.getElementById('startBtn');
   if (startBtn) {
@@ -153,7 +153,7 @@ async function boot() {
   }
 
   showView('landing');
-  console.log('[lab] booted · v0.50');
+  console.log('[lab] booted · v0.51');
 }
 
 document.addEventListener('DOMContentLoaded', boot);
