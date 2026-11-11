@@ -4,7 +4,7 @@
 
 const state = {
   activeTab: 'domain', // 'domain' | 'degree'
-  activeView: 'select' // 'select' | 'mental' | 'degree-bio' | 'degree-chem'
+  activeView: 'select' // 'select' | 'mental' | 'degree-manage'
 };
 
 const els = {};
@@ -18,12 +18,8 @@ export function initDomain({ onExit } = {}) {
     viewDegree: document.getElementById('view-degree'),
 
     drillsMental: document.getElementById('drills-mental'),
-    drillsDegree: document.getElementById('drills-degree'),
-    drillsChem:   document.getElementById('drills-chem'),
 
     backMental: document.getElementById('back-mental'),
-    backDegree: document.getElementById('back-degree'),
-    backChem:   document.getElementById('back-chem'),
 
     choices: Array.from(document.querySelectorAll('.domain-choice')),
     drillCards: Array.from(document.querySelectorAll('.drill-card')),
@@ -40,14 +36,14 @@ export function initDomain({ onExit } = {}) {
       const degree = btn.dataset.degree;
 
       if (domain === 'mental') setView('mental');
-      if (degree === 'biology') setView('degree-bio');
-      if (degree === 'chemistry') setView('degree-chem');
+      if (degree === 'manage') {
+        // Open the module manager (lazy import avoids circular init).
+        import('./modules.js').then(m => m.showModuleManager());
+      }
     });
   });
 
   if (els.backMental) els.backMental.addEventListener('click', () => setView('select'));
-  if (els.backDegree) els.backDegree.addEventListener('click', () => setView('select'));
-  if (els.backChem)   els.backChem.addEventListener('click', () => setView('select'));
 
   els.drillCards.forEach(card => {
     card.addEventListener('click', () => {
@@ -88,8 +84,11 @@ function setView(viewName) {
   if (els.viewDomain) els.viewDomain.classList.remove('is-active');
   if (els.viewDegree) els.viewDegree.classList.remove('is-active');
   if (els.drillsMental) els.drillsMental.classList.remove('is-active');
-  if (els.drillsDegree) els.drillsDegree.classList.remove('is-active');
-  if (els.drillsChem)   els.drillsChem.classList.remove('is-active');
+
+  // Hide CMS manager views too
+  document.getElementById('view-modules')?.classList.remove('is-active');
+  document.getElementById('view-lectures')?.classList.remove('is-active');
+
   document.querySelectorAll('.drill-view').forEach(el => el.classList.remove('is-active'));
 
   if (viewName === 'select') {
@@ -97,10 +96,9 @@ function setView(viewName) {
     if (state.activeTab === 'degree' && els.viewDegree) els.viewDegree.classList.add('is-active');
   } else if (viewName === 'mental') {
     if (els.drillsMental) els.drillsMental.classList.add('is-active');
-  } else if (viewName === 'degree-bio') {
-    if (els.drillsDegree) els.drillsDegree.classList.add('is-active');
-  } else if (viewName === 'degree-chem') {
-    if (els.drillsChem) els.drillsChem.classList.add('is-active');
+  } else if (viewName === 'degree-manage') {
+    // Handled by modules.js — kept here for clarity
+    document.getElementById('view-modules')?.classList.add('is-active');
   }
 }
 
@@ -108,8 +106,6 @@ function openDrill(id, moduleId, lectureId) {
   if (els.topbar) els.topbar.style.display = 'none';
 
   if (els.drillsMental) els.drillsMental.classList.remove('is-active');
-  if (els.drillsDegree) els.drillsDegree.classList.remove('is-active');
-  if (els.drillsChem)   els.drillsChem.classList.remove('is-active');
 
   if (id === 'number-memory') {
     if (typeof window.__nmReset === 'function') window.__nmReset();
@@ -143,10 +139,6 @@ export function closeDrill() {
 
   if (state.activeView === 'mental') {
     if (els.drillsMental) els.drillsMental.classList.add('is-active');
-  } else if (state.activeView === 'degree-bio') {
-    if (els.drillsDegree) els.drillsDegree.classList.add('is-active');
-  } else if (state.activeView === 'degree-chem') {
-    if (els.drillsChem) els.drillsChem.classList.add('is-active');
   } else {
     setView('select');
   }
