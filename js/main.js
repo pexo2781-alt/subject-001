@@ -8,6 +8,7 @@ import { initSequenceMemory } from './sequence-memory.js';
 import { initVisualMemory } from './visual-memory.js';
 import { initChimpTest } from './chimp-test.js';
 import { initBiologyTest } from './biology-test.js';
+import { loadContent, onContentChange } from './content.js';
 
 const views = {
   landing: document.getElementById('view-landing'),
@@ -41,6 +42,23 @@ function waitFor(predicate, timeout = 5000, interval = 50) {
   });
 }
 
+async function enterLab(session) {
+  console.log('[lab] authenticated as', session?.user?.email);
+  closeSettings();
+
+  // Load content from Supabase (or seed on first login)
+  try {
+    await loadContent();
+  } catch (e) {
+    console.error('[lab] content load failed', e);
+    alert('Could not load your content from the server. Check your connection and try again.');
+    return;
+  }
+
+  showView('lab');
+  showDomainView();
+}
+
 async function boot() {
   const cfg = loadConfig();
   cfg.theme = 'light';
@@ -56,19 +74,11 @@ async function boot() {
   initChimpTest();
   initBiologyTest();
 
-  try {
-    await waitFor(() => !!window.SB);
-  } catch (e) {
-    console.warn('[lab] window.SB not available yet.');
-  }
+  try { await waitFor(() => !!window.SB); }
+  catch (e) { console.warn('[lab] window.SB not available yet.'); }
 
   initAuth({
-    onSuccess: (session) => {
-      console.log('[lab] authenticated as', session?.user?.email);
-      closeSettings();
-      showView('lab');
-      showDomainView();
-    }
+    onSuccess: (session) => { enterLab(session); }
   });
 
   const startBtn = document.getElementById('startBtn');
@@ -84,7 +94,7 @@ async function boot() {
       try {
         if (window.SB) {
           const sessionPromise = window.SB.getSession();
-          const timeoutPromise = new Promise((_, reject) => 
+          const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('timeout')), 3000)
           );
           session = await Promise.race([sessionPromise, timeoutPromise]);
@@ -98,7 +108,6 @@ async function boot() {
         startBtn.textContent = 'Server Unavailable';
         startBtn.style.color = '#ff5555';
         startBtn.style.borderColor = '#ff5555';
-        
         setTimeout(() => {
           startBtn.textContent = originalText;
           startBtn.style.color = '';
@@ -112,22 +121,16 @@ async function boot() {
       startBtn.textContent = originalText;
       startBtn.disabled = false;
 
-      if (session) { 
-        showView('lab'); 
-        showDomainView();
-      } else {
-        showView('auth');
-      }
+      if (session) { await enterLab(session); }
+      else { showView('auth'); }
     });
   }
 
   const authBackBtn = document.getElementById('authBackBtn');
-  if (authBackBtn) {
-    authBackBtn.addEventListener('click', () => {
-      resetAuthForm();
-      showView('landing');
-    });
-  }
+  if (authBackBtn) authBackBtn.addEventListener('click', () => {
+    resetAuthForm();
+    showView('landing');
+  });
 
   if (openSettingsBtn) openSettingsBtn.addEventListener('click', openSettings);
   if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettings);
@@ -137,9 +140,7 @@ async function boot() {
     });
   }
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && settingsOverlay && settingsOverlay.classList.contains('is-open')) {
-      closeSettings();
-    }
+    if (e.key === 'Escape' && settingsOverlay?.classList.contains('is-open')) closeSettings();
   });
 
   if (signOutBtn) {
@@ -152,7 +153,7 @@ async function boot() {
   }
 
   showView('landing');
-  console.log('[lab] booted · v0.40');
+  console.log('[lab] booted · v0.50');
 }
 
 document.addEventListener('DOMContentLoaded', boot);
