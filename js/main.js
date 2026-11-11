@@ -8,9 +8,10 @@ import { initSequenceMemory } from './sequence-memory.js';
 import { initVisualMemory } from './visual-memory.js';
 import { initChimpTest } from './chimp-test.js';
 import { initBiologyTest } from './biology-test.js';
-import { initModules } from './modules.js';          // ← NEW
-import { initLectures } from './lectures.js';        // ← NEW
-import { loadContent, onContentChange } from './content.js';
+import { initModules } from './modules.js';
+import { initLectures } from './lectures.js';
+import { initQuestionEditor } from './question-editor.js';
+import { loadContent } from './content.js';
 
 const views = {
   landing: document.getElementById('view-landing'),
@@ -73,8 +74,9 @@ async function boot() {
   initVisualMemory();
   initChimpTest();
   initBiologyTest();
-  initModules();      // ← NEW
-  initLectures();     // ← NEW
+  initModules();
+  initLectures();
+  initQuestionEditor();
 
   try { await waitFor(() => !!window.SB); }
   catch (e) { console.warn('[lab] window.SB not available yet.'); }
@@ -153,7 +155,7 @@ async function boot() {
   }
 
   showView('landing');
-  console.log('[lab] booted · v0.51');
+  console.log('[lab] booted · v0.52');
 }
 
 document.addEventListener('DOMContentLoaded', boot);
