@@ -100,7 +100,21 @@ function updateStats() {
 }
 
 function nextQuestion() {
-  if (state.streak >= TARGET_STREAK) {
+  const TOTAL_WRONG_LIMIT = 3;
+
+// in handleResult:
+if (!isCorrect) {
+  state.wrongCount++;
+  if (state.wrongCount >= TOTAL_WRONG_LIMIT) {
+    showFailScreen();
+    return;
+  }
+}
+
+// after every correct answer, check win:
+if (state.correctCount === totalQuestionsInLecture && state.wrongCount < TOTAL_WRONG_LIMIT) {
+  showWinScreen();
+}
     // WIN STATE
     els.feedbackTitle.textContent = "TEST PASSED";
     els.feedbackTitle.className = "bt-feedback-title is-correct";
