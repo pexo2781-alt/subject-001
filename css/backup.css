@@ -1,0 +1,175 @@
+/* ============================================================
+   Backup / Restore UI (inside settings overlay)
+   ============================================================ */
+
+.settings-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--text-dim);
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+}
+
+.settings-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition);
+  margin-bottom: -1px;
+}
+
+.settings-tab:hover { color: var(--text); }
+
+.settings-tab.is-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.settings-panel {
+  display: none;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.settings-panel.is-active { display: flex; }
+
+/* ---------- Backup groups ---------- */
+.backup-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid var(--text-dim);
+  background: rgba(var(--text-rgb), 0.02);
+}
+
+.backup-group.is-danger {
+  border-color: rgba(255, 85, 85, 0.4);
+  background: rgba(255, 85, 85, 0.03);
+}
+
+.backup-heading {
+  font-family: var(--font-accent);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.backup-group.is-danger .backup-heading { color: #ff5555; }
+
+.backup-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.backup-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.backup-actions .lab-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.1em !important;
+}
+
+.backup-actions .lab-btn.danger {
+  border-color: #ff5555;
+  color: #ff5555;
+}
+
+.backup-actions .lab-btn.danger:hover {
+  background: #ff5555;
+  color: var(--bg);
+  box-shadow: 0 0 20px rgba(255, 85, 85, 0.4);
+}
+
+/* ---------- Version list ---------- */
+.backup-version-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.backup-version {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--text-dim);
+  font-size: 0.85rem;
+  transition: border-color var(--transition);
+}
+
+.backup-version:hover {
+  border-color: var(--accent);
+}
+
+.backup-version-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.backup-version-label {
+  color: var(--text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.backup-version-time {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.backup-version-btn {
+  background: transparent;
+  border: 1px solid var(--text-dim);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  border-radius: 0;
+  flex-shrink: 0;
+}
+
+.backup-version-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.backup-empty {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.backup-file-input {
+  display: none;
+}
