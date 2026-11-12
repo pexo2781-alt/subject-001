@@ -11,6 +11,7 @@ import { initBiologyTest } from './biology-test.js';
 import { initModules } from './modules.js';
 import { initLectures } from './lectures.js';
 import { initQuestionEditor } from './question-editor.js';
+import { initBackup } from './backup.js';
 import { loadContent } from './content.js';
 
 const views = {
@@ -77,6 +78,7 @@ async function boot() {
   initModules();
   initLectures();
   initQuestionEditor();
+  initBackup();
 
   try { await waitFor(() => !!window.SB); }
   catch (e) { console.warn('[lab] window.SB not available yet.'); }
@@ -155,7 +157,7 @@ async function boot() {
   }
 
   showView('landing');
-  console.log('[lab] booted · v0.52');
+  console.log('[lab] booted · v0.60');
 }
 
 document.addEventListener('DOMContentLoaded', boot);
