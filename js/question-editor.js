@@ -1,9 +1,7 @@
 // ============================================================
 // js/question-editor.js — Full question editor
-//
-// Tabs:
-//   - Questions: list / add / edit / delete / reorder questions
-//   - Feedback:  per-lecture feedback settings
+// FIXED: type-specific fields (pairs, steps, options, accept,
+//        wrong_reasons) no longer get lost on save/reload.
 // ============================================================
 
 import { getContent, mutateContent } from './content.js';
@@ -11,8 +9,8 @@ import { getContent, mutateContent } from './content.js';
 const els = {};
 let currentModuleId = null;
 let currentLectureId = null;
-let selectedQuestionId = null;   // for select-then-swap reorder
-let activeTab = 'questions';     // 'questions' | 'feedback'
+let selectedQuestionId = null;
+let activeTab = 'questions';
 
 const QUESTION_TYPES = [
   { value: 'typed',    label: 'Typed answer' },
@@ -57,7 +55,6 @@ export function openQuestionEditor(moduleId, lectureId) {
   selectedQuestionId = null;
   activeTab = 'questions';
 
-  // Hide other views
   document.getElementById('view-lectures')?.classList.remove('is-active');
   document.getElementById('view-modules')?.classList.remove('is-active');
   document.getElementById('view-degree')?.classList.remove('is-active');
@@ -149,14 +146,8 @@ function renderQuestionList(lec) {
 // ============================================================
 
 function handleBodyClick(questionId) {
-  if (!selectedQuestionId) {
-    selectQuestion(questionId);
-    return;
-  }
-  if (selectedQuestionId === questionId) {
-    clearSelection();
-    return;
-  }
+  if (!selectedQuestionId) { selectQuestion(questionId); return; }
+  if (selectedQuestionId === questionId) { clearSelection(); return; }
   swapQuestions(selectedQuestionId, questionId);
 }
 
@@ -173,10 +164,7 @@ function clearSelection() {
 }
 
 function renderReorderBar() {
-  if (!selectedQuestionId) {
-    els.reorderBar.classList.remove('is-active');
-    return;
-  }
+  if (!selectedQuestionId) { els.reorderBar.classList.remove('is-active'); return; }
   els.reorderBar.classList.add('is-active');
   els.reorderHint.textContent = 'Selected — tap another question to swap';
 }
@@ -217,8 +205,8 @@ function openEditorModal({ mode, question }) {
   document.body.appendChild(overlay);
   wireModalEvents(overlay, q, isEdit);
 
-  // Initial render of type-specific section
-  syncTypeSection(overlay, q.type);
+  // Populate the type-specific section FROM q (not from the empty DOM)
+  populateTypeSection(overlay, q);
 }
 
 function defaultQuestion() {
@@ -269,7 +257,7 @@ function renderModalHtml(q, isEdit) {
         <div class="qe-type-section" data-type-section="mcq">
           <div class="qe-type-heading">Options (select the correct answer)</div>
           <div class="qe-list-rows" id="qeMcqRows"></div>
-          <button class="qe-add-row-btn" data-add="mcq">+ Add option</button>
+          <button class="qe-add-row-btn" data-add="mcq" type="button">+ Add option</button>
         </div>
 
         <!-- TF -->
@@ -287,7 +275,7 @@ function renderModalHtml(q, isEdit) {
           </div>
           <div class="qe-type-heading">Wrong reasons (as distractors)</div>
           <div class="qe-list-rows" id="qeTfWrongRows"></div>
-          <button class="qe-add-row-btn" data-add="tf-wrong">+ Add wrong reason</button>
+          <button class="qe-add-row-btn" data-add="tf-wrong" type="button">+ Add wrong reason</button>
         </div>
 
         <!-- Typed / Fill -->
@@ -298,24 +286,23 @@ function renderModalHtml(q, isEdit) {
           </div>
           <div class="qe-type-heading">Alternative accepted answers</div>
           <div class="qe-list-rows" id="qeAcceptRows"></div>
-          <button class="qe-add-row-btn" data-add="accept">+ Add alternative</button>
+          <button class="qe-add-row-btn" data-add="accept" type="button">+ Add alternative</button>
         </div>
 
         <!-- Sequence -->
         <div class="qe-type-section" data-type-section="sequence">
           <div class="qe-type-heading">Steps (in correct order)</div>
           <div class="qe-list-rows" id="qeStepRows"></div>
-          <button class="qe-add-row-btn" data-add="step">+ Add step</button>
+          <button class="qe-add-row-btn" data-add="step" type="button">+ Add step</button>
         </div>
 
         <!-- Match -->
         <div class="qe-type-section" data-type-section="match">
           <div class="qe-type-heading">Pairs</div>
           <div class="qe-list-rows" id="qePairRows"></div>
-          <button class="qe-add-row-btn" data-add="pair">+ Add pair</button>
+          <button class="qe-add-row-btn" data-add="pair" type="button">+ Add pair</button>
         </div>
 
-        <!-- Explanation + feedback -->
         <div class="qe-field">
           <label for="qeExplanation">Explanation (shown on feedback screen)</label>
           <textarea id="qeExplanation" placeholder="Why the answer is what it is...">${escapeHtml(q.explanation || '')}</textarea>
@@ -342,19 +329,22 @@ function wireModalEvents(overlay, q, isEdit) {
   overlay.querySelector('[data-action="cancel"]').addEventListener('click', close);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
-  // Type switch
   const typeSel = overlay.querySelector('#qeType');
   typeSel.addEventListener('change', () => {
+    // Reset the type-specific section visibility and re-render from the current q,
+    // using the current DOM as the source for the *other* fields.
+    const refreshed = collectTransient(overlay);
+    refreshed.type = typeSel.value;
+    // Persist the latest DOM values back into q so they survive a type switch.
+    Object.assign(q, refreshed);
     q.type = typeSel.value;
-    syncTypeSection(overlay, q.type);
+    populateTypeSection(overlay, q);
   });
 
-  // Add-row buttons
   overlay.querySelectorAll('[data-add]').forEach(btn => {
     btn.addEventListener('click', () => addRow(overlay, btn.dataset.add, q));
   });
 
-  // Save
   overlay.querySelector('[data-action="save"]').addEventListener('click', () => {
     const result = collectFromModal(overlay, q);
     if (!result.ok) { showToast(result.error, true); return; }
@@ -364,52 +354,39 @@ function wireModalEvents(overlay, q, isEdit) {
   });
 }
 
-function syncTypeSection(overlay, type) {
+/**
+ * Populate the type-specific section from a question object (NOT from the DOM).
+ * Called on open, and on type change.
+ */
+function populateTypeSection(overlay, q) {
   overlay.querySelectorAll('.qe-type-section').forEach(sec => {
     const t = sec.dataset.typeSection;
     let active = false;
-    if (type === 'mcq') active = t === 'mcq';
-    else if (type === 'tf') active = t === 'tf';
-    else if (type === 'typed' || type === 'fill') active = t === 'typed';
-    else if (type === 'sequence') active = t === 'sequence';
-    else if (type === 'match') active = t === 'match';
+    if (q.type === 'mcq') active = t === 'mcq';
+    else if (q.type === 'tf') active = t === 'tf';
+    else if (q.type === 'typed' || q.type === 'fill') active = t === 'typed';
+    else if (q.type === 'sequence') active = t === 'sequence';
+    else if (q.type === 'match') active = t === 'match';
     sec.classList.toggle('is-active', active);
   });
 
-  // Populate rows for the active section from current q
-  const q = collectTransient(overlay);
-  if (type === 'mcq')      renderMcqRows(overlay, q.options, q.answer);
-  if (type === 'tf')       renderTfWrongRows(overlay, q.wrong_reasons);
-  if (type === 'typed' || type === 'fill') renderAcceptRows(overlay, q.accept);
-  if (type === 'sequence') renderStepRows(overlay, q.steps);
-  if (type === 'match')    renderPairRows(overlay, q.pairs);
+  if (q.type === 'mcq')                    renderMcqRows(overlay, q.options || ['', '', '', ''], q.answer ?? 0);
+  if (q.type === 'tf')                     renderTfWrongRows(overlay, q.wrong_reasons || ['', '']);
+  if (q.type === 'typed' || q.type === 'fill') renderAcceptRows(overlay, q.accept || []);
+  if (q.type === 'sequence')               renderStepRows(overlay, q.steps || ['', '', '']);
+  if (q.type === 'match')                  renderPairRows(overlay, q.pairs || [{ left: '', right: '' }, { left: '', right: '' }]);
 }
 
+/** Read the *common* fields (prompt / answer / explanation / feedbackTitle / tf) from the DOM. */
 function collectTransient(overlay) {
-  const type = overlay.querySelector('#qeType').value;
-  const q = {
-    type,
+  return {
     prompt: overlay.querySelector('#qePrompt').value,
     answer: overlay.querySelector('#qeAnswer')?.value ?? '',
     explanation: overlay.querySelector('#qeExplanation').value,
     feedbackTitle: overlay.querySelector('#qeFeedbackTitle').value,
-    options: readList(overlay, '#qeMcqRows', 'input'),
-    accept: readList(overlay, '#qeAcceptRows', 'input'),
-    steps: readList(overlay, '#qeStepRows', 'input'),
-    wrong_reasons: readList(overlay, '#qeTfWrongRows', 'input'),
-    reason: overlay.querySelector('#qeTfReason')?.value || '',
-    pairs: readPairs(overlay)
+    reason: overlay.querySelector('#qeTfReason')?.value || ''
   };
-  if (type === 'tf') {
-    q.answer = overlay.querySelector('#qeTfAnswer').value === 'true';
-  }
-  // MCQ answer index
-  const checked = overlay.querySelector('#qeMcqRows input[type="radio"]:checked');
-  if (checked) q.answer = parseInt(checked.value, 10);
-  return q;
 }
-
-// ---- Row renderers ----
 
 function renderMcqRows(overlay, options, answer) {
   const box = overlay.querySelector('#qeMcqRows');
@@ -420,11 +397,10 @@ function renderMcqRows(overlay, options, answer) {
     row.innerHTML = `
       <input type="radio" name="qeMcqAnswer" value="${i}" ${i === answer ? 'checked' : ''}>
       <input type="text" value="${escapeAttr(opt)}" placeholder="Option ${i + 1}">
-      <button class="cms-icon-btn is-danger" data-remove title="Remove">✕</button>
+      <button class="cms-icon-btn is-danger" data-remove title="Remove" type="button">✕</button>
     `;
     row.querySelector('[data-remove]').addEventListener('click', () => {
       row.remove();
-      // Re-number radio values
       Array.from(box.children).forEach((r, idx) => {
         const radio = r.querySelector('input[type="radio"]');
         radio.value = idx;
@@ -442,7 +418,7 @@ function renderTfWrongRows(overlay, wrongs) {
     row.className = 'qe-list-row';
     row.innerHTML = `
       <input type="text" value="${escapeAttr(w)}" placeholder="Wrong reason ${i + 1}">
-      <button class="cms-icon-btn is-danger" data-remove title="Remove">✕</button>
+      <button class="cms-icon-btn is-danger" data-remove title="Remove" type="button">✕</button>
     `;
     row.querySelector('[data-remove]').addEventListener('click', () => row.remove());
     box.appendChild(row);
@@ -457,7 +433,7 @@ function renderAcceptRows(overlay, accepts) {
     row.className = 'qe-list-row';
     row.innerHTML = `
       <input type="text" value="${escapeAttr(a)}" placeholder="Alternative ${i + 1}">
-      <button class="cms-icon-btn is-danger" data-remove title="Remove">✕</button>
+      <button class="cms-icon-btn is-danger" data-remove title="Remove" type="button">✕</button>
     `;
     row.querySelector('[data-remove]').addEventListener('click', () => row.remove());
     box.appendChild(row);
@@ -472,7 +448,7 @@ function renderStepRows(overlay, steps) {
     row.className = 'qe-list-row';
     row.innerHTML = `
       <input type="text" value="${escapeAttr(s)}" placeholder="Step ${i + 1}">
-      <button class="cms-icon-btn is-danger" data-remove title="Remove">✕</button>
+      <button class="cms-icon-btn is-danger" data-remove title="Remove" type="button">✕</button>
     `;
     row.querySelector('[data-remove]').addEventListener('click', () => row.remove());
     box.appendChild(row);
@@ -488,7 +464,7 @@ function renderPairRows(overlay, pairs) {
     row.innerHTML = `
       <input type="text" value="${escapeAttr(p.left)}" placeholder="Left ${i + 1}">
       <input type="text" value="${escapeAttr(p.right)}" placeholder="Right ${i + 1}">
-      <button class="cms-icon-btn is-danger" data-remove title="Remove">✕</button>
+      <button class="cms-icon-btn is-danger" data-remove title="Remove" type="button">✕</button>
     `;
     row.querySelector('[data-remove]').addEventListener('click', () => row.remove());
     box.appendChild(row);
@@ -497,23 +473,17 @@ function renderPairRows(overlay, pairs) {
 
 function addRow(overlay, kind, q) {
   if (kind === 'mcq') {
-    const box = overlay.querySelector('#qeMcqRows');
-    const count = box.children.length;
-    renderMcqRows(overlay, [...readList(overlay, '#qeMcqRows', 'input'), ''], -1);
-    // Re-add radio selections preserved? Simpler: just append a row
-    const rows = overlay.querySelectorAll('#qeMcqRows .qe-mcq-row');
-    rows.forEach((r, idx) => {
-      const radio = r.querySelector('input[type="radio"]');
-      radio.value = idx;
-    });
+    const cur = readMcqOptions(overlay);
+    const ans = getSelectedMcqAnswer(overlay);
+    renderMcqRows(overlay, [...cur, ''], ans);
   } else if (kind === 'tf-wrong') {
-    const cur = readList(overlay, '#qeTfWrongRows', 'input');
+    const cur = readList(overlay, '#qeTfWrongRows');
     renderTfWrongRows(overlay, [...cur, '']);
   } else if (kind === 'accept') {
-    const cur = readList(overlay, '#qeAcceptRows', 'input');
+    const cur = readList(overlay, '#qeAcceptRows');
     renderAcceptRows(overlay, [...cur, '']);
   } else if (kind === 'step') {
-    const cur = readList(overlay, '#qeStepRows', 'input');
+    const cur = readList(overlay, '#qeStepRows');
     renderStepRows(overlay, [...cur, '']);
   } else if (kind === 'pair') {
     const cur = readPairs(overlay);
@@ -521,7 +491,32 @@ function addRow(overlay, kind, q) {
   }
 }
 
-// ---- Collecting from modal ----
+// ---- DOM readers for type-specific fields ----
+
+function readList(overlay, selector) {
+  const rows = overlay.querySelectorAll(`${selector} input[type="text"]`);
+  return Array.from(rows).map(i => i.value);
+}
+
+function readPairs(overlay) {
+  const rows = overlay.querySelectorAll('#qePairRows .qe-list-row');
+  return Array.from(rows).map(row => {
+    const inputs = row.querySelectorAll('input[type="text"]');
+    return { left: inputs[0]?.value ?? '', right: inputs[1]?.value ?? '' };
+  });
+}
+
+function readMcqOptions(overlay) {
+  const rows = overlay.querySelectorAll('#qeMcqRows .qe-mcq-row');
+  return Array.from(rows).map(row => row.querySelector('input[type="text"]').value);
+}
+
+function getSelectedMcqAnswer(overlay) {
+  const checked = overlay.querySelector('#qeMcqRows input[type="radio"]:checked');
+  return checked ? parseInt(checked.value, 10) : 0;
+}
+
+// ---- Collect + validate for save ----
 
 function collectFromModal(overlay, baseQ) {
   const type = overlay.querySelector('#qeType').value;
@@ -540,7 +535,7 @@ function collectFromModal(overlay, baseQ) {
   };
 
   if (type === 'mcq') {
-    const options = readList(overlay, '#qeMcqRows', 'input').map(s => s.trim());
+    const options = readMcqOptions(overlay).map(s => s.trim());
     if (options.length < 2) return { ok: false, error: 'Need at least 2 options' };
     if (options.some(o => !o)) return { ok: false, error: 'All options must be filled' };
     const checked = overlay.querySelector('#qeMcqRows input[type="radio"]:checked');
@@ -552,26 +547,28 @@ function collectFromModal(overlay, baseQ) {
   } else if (type === 'tf') {
     q.answer = overlay.querySelector('#qeTfAnswer').value === 'true';
     q.reason = overlay.querySelector('#qeTfReason').value.trim();
-    q.wrong_reasons = readList(overlay, '#qeTfWrongRows', 'input').map(s => s.trim()).filter(Boolean);
+    q.wrong_reasons = readList(overlay, '#qeTfWrongRows').map(s => s.trim()).filter(Boolean);
     if (!q.reason) return { ok: false, error: 'Correct reason is required' };
     q.options = undefined; q.accept = undefined; q.steps = undefined; q.pairs = undefined;
   } else if (type === 'typed' || type === 'fill') {
     const answer = overlay.querySelector('#qeAnswer').value.trim();
     if (!answer) return { ok: false, error: 'Correct answer is required' };
     q.answer = answer;
-    q.accept = readList(overlay, '#qeAcceptRows', 'input').map(s => s.trim()).filter(Boolean);
+    q.accept = readList(overlay, '#qeAcceptRows').map(s => s.trim()).filter(Boolean);
     q.options = undefined; q.steps = undefined; q.pairs = undefined;
     q.reason = undefined; q.wrong_reasons = undefined;
   } else if (type === 'sequence') {
-    const steps = readList(overlay, '#qeStepRows', 'input').map(s => s.trim()).filter(Boolean);
+    const steps = readList(overlay, '#qeStepRows').map(s => s.trim()).filter(Boolean);
     if (steps.length < 2) return { ok: false, error: 'Need at least 2 steps' };
     q.steps = steps;
     q.options = undefined; q.accept = undefined; q.pairs = undefined;
     q.reason = undefined; q.wrong_reasons = undefined;
   } else if (type === 'match') {
-    const pairs = readPairs(overlay).filter(p => p.left.trim() && p.right.trim());
-    if (pairs.length < 2) return { ok: false, error: 'Need at least 2 pairs' };
-    q.pairs = pairs.map(p => ({ left: p.left.trim(), right: p.right.trim() }));
+    const pairs = readPairs(overlay)
+      .map(p => ({ left: (p.left || '').trim(), right: (p.right || '').trim() }))
+      .filter(p => p.left && p.right);
+    if (pairs.length < 2) return { ok: false, error: 'Need at least 2 complete pairs' };
+    q.pairs = pairs;
     q.options = undefined; q.accept = undefined; q.steps = undefined;
     q.reason = undefined; q.wrong_reasons = undefined;
   }
@@ -579,21 +576,8 @@ function collectFromModal(overlay, baseQ) {
   return { ok: true, question: q };
 }
 
-function readList(overlay, selector, tag) {
-  const rows = overlay.querySelectorAll(`${selector} input[type="text"]`);
-  return Array.from(rows).map(i => i.value);
-}
-
-function readPairs(overlay) {
-  const rows = overlay.querySelectorAll('#qePairRows .qe-list-row');
-  return Array.from(rows).map(row => {
-    const inputs = row.querySelectorAll('input');
-    return { left: inputs[0].value, right: inputs[1].value };
-  });
-}
-
 // ============================================================
-// CRUD — create / update / delete questions
+// CRUD
 // ============================================================
 
 function createQuestion(q) {
@@ -707,7 +691,7 @@ function renderFeedbackForm() {
       </div>
     </div>
 
-    <button class="lab-btn" id="qeSaveFeedback">Save feedback settings</button>
+    <button class="lab-btn" id="qeSaveFeedback" type="button">Save feedback settings</button>
   `;
 
   document.getElementById('qeSaveFeedback').addEventListener('click', saveFeedbackSettings);
