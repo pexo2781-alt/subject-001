@@ -1,4 +1,4 @@
-import { getContent, onContentChange } from './content.js';
+import { getContent } from './content.js';
 import { closeDrill } from './domain.js';
 
 const WRONG_LIMIT = 3;
@@ -8,7 +8,8 @@ const state = {
   moduleId: null,
   lectureId: null,
   lecture: null,
-  questions: [],          // ordered copy
+  questions: [],
+  originalCount: 0,
   index: 0,
   wrongCount: 0,
   answeredThisRun: new Set(),
@@ -59,6 +60,7 @@ export function setActiveLecture(moduleId, lectureId) {
 export function reset() {
   state.running = false;
   state.questions = [];
+  state.originalCount = 0;
   state.index = 0;
   state.wrongCount = 0;
   state.answeredThisRun = new Set();
@@ -85,6 +87,7 @@ function startSession() {
 
   state.lecture = lecture;
   state.questions = shuffle([...lecture.questions]);
+  state.originalCount = state.questions.length;
   state.index = 0;
   state.wrongCount = 0;
   state.answeredThisRun = new Set();
@@ -101,7 +104,6 @@ function findLecture(moduleId, lectureId) {
     const lec = mod.lectures?.find(l => l.id === lectureId);
     if (lec) return lec;
   }
-  // Fallback: search all modules if moduleId mismatch
   for (const mod of modules) {
     const lec = mod.lectures?.find(l => l.id === lectureId);
     if (lec) return lec;
@@ -111,14 +113,20 @@ function findLecture(moduleId, lectureId) {
 
 function renderCurrent() {
   if (!state.running) return;
-  if (state.index >= state.questions.length) {
-    // If we've cycled through all and every question was answered correctly at least once, win.
-    if (state.wrongCount < WRONG_LIMIT && state.answeredThisRun.size === state.questions.length) {
-      showWin();
-    } else {
-      showFatal('Unexpected state', 'Session ended unexpectedly.');
-    }
+
+  if (state.answeredThisRun.size >= state.originalCount) {
+    showWin();
     return;
+  }
+
+  if (state.index >= state.questions.length) {
+    const unanswered = state.questions.filter(q => !state.answeredThisRun.has(q.id));
+    if (unanswered.length === 0) {
+      showWin();
+      return;
+    }
+    state.questions = shuffle(unanswered);
+    state.index = 0;
   }
 
   state.isAnswered = false;
@@ -345,7 +353,6 @@ function checkMCQ(q, idx, wrap) {
   }
 }
 
-/** Called by every question type when answered. */
 function finishAnswer(isCorrect, title, explanation, q) {
   if (state.isAnswered) return;
   state.isAnswered = true;
@@ -354,7 +361,6 @@ function finishAnswer(isCorrect, title, explanation, q) {
     state.answeredThisRun.add(q.id);
   } else {
     state.wrongCount++;
-    // Re-queue this question at the end so it must be answered correctly before finishing.
     state.questions.push(q);
   }
 
@@ -392,7 +398,7 @@ function onContinue() {
 }
 
 function updateStats() {
-  const total = state.questions.length;
+  const total = state.originalCount || state.questions.length;
   const answeredCorrect = state.answeredThisRun.size;
   if (els.statStreak) els.statStreak.textContent = `${answeredCorrect} / ${total}`;
   if (els.statCorrect) els.statCorrect.textContent = answeredCorrect;
@@ -415,7 +421,7 @@ function showWin() {
   els.feedbackTitle.textContent = fb.winTitle || 'LECTURE PASSED';
   els.feedbackTitle.className = 'bt-feedback-title is-correct';
   els.feedbackText.innerHTML =
-    `All <strong>${state.questions.length}</strong> questions answered correctly` +
+    `All <strong>${state.originalCount}</strong> questions answered correctly` +
     (state.wrongCount ? ` with <strong>${state.wrongCount}</strong> wrong attempt${state.wrongCount === 1 ? '' : 's'}.` : '.');
   els.continueBtn.textContent = 'Return to Menu';
   els.continueBtn.onclick = () => { reset(); closeDrill(); };
