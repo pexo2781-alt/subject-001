@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/biology-test.css">
   <link rel="stylesheet" href="css/cms.css">
   <link rel="stylesheet" href="css/question-editor.css">
+  <link rel="stylesheet" href="css/backup.css">
 </head>
 <body>
   <div class="bg-grid"></div>
@@ -501,57 +502,102 @@
           <h2 id="settingsHeading">LAB CONFIG</h2>
           <button class="lab-close-btn" id="closeSettingsBtn" aria-label="Close settings">✕</button>
         </div>
-        <div class="settings-group">
-          <label for="labNameInput">Lab name</label>
-          <input type="text" id="labNameInput" value="SUBJECT 001" placeholder="Enter lab title">
+
+        <div class="settings-tabs">
+          <button class="settings-tab is-active" data-tab="appearance" type="button">Appearance</button>
+          <button class="settings-tab" data-tab="data" type="button">Data</button>
         </div>
-        <div class="settings-group">
-          <label for="accentColorInput">Accent color</label>
-          <input type="color" id="accentColorInput" value="#ffffff">
-        </div>
-        <div class="settings-group">
-          <label for="textColorInput">Text color</label>
-          <div class="text-color-row">
-            <input type="color" id="textColorInput" value="#000000">
-            <button class="text-color-reset" id="resetTextColorBtn" type="button" title="Reset to theme default">Auto</button>
+
+        <!-- Appearance panel -->
+        <div class="settings-panel is-active" id="settingsPanelAppearance">
+          <div class="settings-group">
+            <label for="labNameInput">Lab name</label>
+            <input type="text" id="labNameInput" value="SUBJECT 001" placeholder="Enter lab title">
+          </div>
+          <div class="settings-group">
+            <label for="accentColorInput">Accent color</label>
+            <input type="color" id="accentColorInput" value="#ffffff">
+          </div>
+          <div class="settings-group">
+            <label for="textColorInput">Text color</label>
+            <div class="text-color-row">
+              <input type="color" id="textColorInput" value="#000000">
+              <button class="text-color-reset" id="resetTextColorBtn" type="button" title="Reset to theme default">Auto</button>
+            </div>
+          </div>
+          <div class="settings-group">
+            <label for="accentFontSelect">Accent font</label>
+            <select id="accentFontSelect">
+              <option value="'Inter', system-ui, sans-serif">Inter (default)</option>
+              <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+              <option value="'Courier New', monospace">Courier New</option>
+              <option value="'Arial Black', 'Arial Bold', sans-serif">Arial Black</option>
+              <option value="'Georgia', serif">Georgia</option>
+              <option value="'Times New Roman', serif">Times New Roman</option>
+              <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+              <option value="'Verdana', sans-serif">Verdana</option>
+              <option value="'Impact', sans-serif">Impact</option>
+            </select>
+          </div>
+          <div class="settings-group">
+            <label for="quoteInput">Landing quote</label>
+            <input type="text" id="quoteInput" value="“The self is the only laboratory that matters.”" placeholder="Enter a quote">
+          </div>
+          <div class="settings-row-theme">
+            <span class="theme-label">Theme</span>
+            <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">
+              <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+              <span class="theme-toggle-label" id="themeToggleLabel">Light</span>
+            </button>
+          </div>
+          <div class="settings-actions">
+            <button class="lab-btn" id="applySettingsBtn">Apply</button>
+            <button class="lab-btn secondary" id="resetSettingsBtn">Reset</button>
           </div>
         </div>
-        <div class="settings-group">
-          <label for="accentFontSelect">Accent font</label>
-          <select id="accentFontSelect">
-            <option value="'Inter', system-ui, sans-serif">Inter (default)</option>
-            <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
-            <option value="'Courier New', monospace">Courier New</option>
-            <option value="'Arial Black', 'Arial Bold', sans-serif">Arial Black</option>
-            <option value="'Georgia', serif">Georgia</option>
-            <option value="'Times New Roman', serif">Times New Roman</option>
-            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-            <option value="'Verdana', sans-serif">Verdana</option>
-            <option value="'Impact', sans-serif">Impact</option>
-          </select>
-        </div>
-        <div class="settings-group">
-          <label for="quoteInput">Landing quote</label>
-          <input type="text" id="quoteInput" value="“The self is the only laboratory that matters.”" placeholder="Enter a quote">
-        </div>
-        <div class="settings-row-theme">
-          <span class="theme-label">Theme</span>
-          <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">
-            <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
-            <span class="theme-toggle-label" id="themeToggleLabel">Light</span>
-          </button>
-        </div>
-        <div class="settings-actions">
-          <button class="lab-btn" id="applySettingsBtn">Apply</button>
-          <button class="lab-btn secondary" id="resetSettingsBtn">Reset</button>
+
+        <!-- Data panel (backup) -->
+        <div class="settings-panel" id="settingsPanelData">
+          <div class="backup-group">
+            <div class="backup-heading">Export</div>
+            <div class="backup-desc">Download a complete JSON backup of all your modules, lectures, and questions. Save this file somewhere safe.</div>
+            <div class="backup-actions">
+              <button class="lab-btn" id="backupExportBtn" type="button">Export content (.json)</button>
+            </div>
+          </div>
+
+          <div class="backup-group">
+            <div class="backup-heading">Import</div>
+            <div class="backup-desc">Restore from a previously exported JSON file. Your current content will be snapshotted first, so this is reversible.</div>
+            <div class="backup-actions">
+              <button class="lab-btn secondary" id="backupImportBtn" type="button">Choose file…</button>
+              <input class="backup-file-input" id="backupImportFile" type="file" accept="application/json,.json">
+            </div>
+          </div>
+
+          <div class="backup-group">
+            <div class="backup-heading">Version history</div>
+            <div class="backup-desc">Every change you make is snapshotted automatically. Restore any snapshot below.</div>
+            <div class="backup-actions">
+              <button class="lab-btn secondary" id="backupRefreshVersionsBtn" type="button">Refresh</button>
+            </div>
+            <div class="backup-version-list" id="backupVersionList"></div>
+          </div>
+
+          <div class="backup-group is-danger">
+            <div class="backup-heading">Danger zone</div>
+            <div class="backup-desc">Reset all content back to the original seed (Biology L1 + L2, Chemistry L1). This deletes your modules, lectures, and questions — but snapshots the current state first.</div>
+            <div class="backup-actions">
+              <button class="lab-btn danger" id="backupResetBtn" type="button">Reset to seed</button>
+            </div>
+          </div>
         </div>
       </section>
     </div>
 
-    <div class="lab-footer" id="labFooter">LAB · SUBJECT 001 · v0.52</div>
+    <div class="lab-footer" id="labFooter">LAB · SUBJECT 001 · v0.60</div>
   </div>
 
-  <!-- Global toast used by CMS -->
   <div class="cms-toast" id="cmsToast"></div>
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
