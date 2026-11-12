@@ -13,7 +13,8 @@ const state = {
   index: 0,
   wrongCount: 0,
   answeredThisRun: new Set(),
-  isAnswered: false
+  isAnswered: false,
+  feedbackMode: 'continue'   // 'continue' | 'win' | 'fail' | 'fatal'
 };
 
 const els = {};
@@ -43,6 +44,7 @@ export function initBiologyTest() {
     closeDrill();
   });
 
+  // SINGLE handler — dispatches based on state.feedbackMode. Never re-bound.
   els.continueBtn.addEventListener('click', onContinue);
 
   reset();
@@ -65,6 +67,7 @@ export function reset() {
   state.wrongCount = 0;
   state.answeredThisRun = new Set();
   state.isAnswered = false;
+  state.feedbackMode = 'continue';
 
   const view = document.getElementById('view-biology-test');
   if (view) view.classList.add('is-active');
@@ -92,6 +95,7 @@ function startSession() {
   state.wrongCount = 0;
   state.answeredThisRun = new Set();
   state.running = true;
+  state.feedbackMode = 'continue';
 
   updateStats();
   renderCurrent();
@@ -381,20 +385,35 @@ function finishAnswer(isCorrect, title, explanation, q) {
 
   if (state.wrongCount >= WRONG_LIMIT) {
     els.continueBtn.textContent = 'See result';
+    state.feedbackMode = 'fail';
   } else {
     els.continueBtn.textContent = 'Continue';
+    state.feedbackMode = 'continue';
   }
 
   showStage('feedback');
 }
 
+// SINGLE dispatcher. No re-binding ever.
 function onContinue() {
-  if (state.wrongCount >= WRONG_LIMIT) {
-    showFail();
-    return;
+  switch (state.feedbackMode) {
+    case 'fail':
+      showFail();
+      return;
+    case 'win':
+      reset();
+      closeDrill();
+      return;
+    case 'fatal':
+      reset();
+      closeDrill();
+      return;
+    case 'continue':
+    default:
+      state.index++;
+      renderCurrent();
+      return;
   }
-  state.index++;
-  renderCurrent();
 }
 
 function updateStats() {
@@ -417,6 +436,7 @@ function showStage(name) {
 
 function showWin() {
   state.running = false;
+  state.feedbackMode = 'win';
   const fb = state.lecture?.feedback || {};
   els.feedbackTitle.textContent = fb.winTitle || 'LECTURE PASSED';
   els.feedbackTitle.className = 'bt-feedback-title is-correct';
@@ -424,29 +444,28 @@ function showWin() {
     `All <strong>${state.originalCount}</strong> questions answered correctly` +
     (state.wrongCount ? ` with <strong>${state.wrongCount}</strong> wrong attempt${state.wrongCount === 1 ? '' : 's'}.` : '.');
   els.continueBtn.textContent = 'Return to Menu';
-  els.continueBtn.onclick = () => { reset(); closeDrill(); };
   showStage('feedback');
 }
 
 function showFail() {
   state.running = false;
+  state.feedbackMode = 'fail';
   const fb = state.lecture?.feedback || {};
   els.feedbackTitle.textContent = fb.failTitle || 'LECTURE FAILED';
   els.feedbackTitle.className = 'bt-feedback-title is-wrong';
   els.feedbackText.innerHTML =
     `You reached the limit of <strong>${WRONG_LIMIT}</strong> wrong answers. Try again.`;
   els.continueBtn.textContent = 'Retry';
-  els.continueBtn.onclick = () => { reset(); };
   showStage('feedback');
 }
 
 function showFatal(title, msg) {
   state.running = false;
+  state.feedbackMode = 'fatal';
   els.feedbackTitle.textContent = title;
   els.feedbackTitle.className = 'bt-feedback-title is-wrong';
   els.feedbackText.textContent = msg;
   els.continueBtn.textContent = 'Return to Menu';
-  els.continueBtn.onclick = () => { reset(); closeDrill(); };
   showStage('feedback');
 }
 
