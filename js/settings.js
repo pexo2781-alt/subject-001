@@ -8,6 +8,7 @@ import {
 } from './config.js';
 
 export function initSettings({ onClose } = {}) {
+  // ---------- Appearance tab (existing) ----------
   const labNameInput     = document.getElementById('labNameInput');
   const accentColorInput = document.getElementById('accentColorInput');
   const textColorInput   = document.getElementById('textColorInput');
@@ -20,6 +21,32 @@ export function initSettings({ onClose } = {}) {
   const themeToggle      = document.getElementById('themeToggle');
   const themeLabel       = document.getElementById('themeToggleLabel');
 
+  // ---------- Tabs ----------
+  const tabs = Array.from(document.querySelectorAll('.settings-tab'));
+  const panels = {
+    appearance: document.getElementById('settingsPanelAppearance'),
+    data: document.getElementById('settingsPanelData')
+  };
+
+  let activeTab = 'appearance';
+
+  function setTab(name) {
+    activeTab = name;
+    tabs.forEach(t => t.classList.toggle('is-active', t.dataset.tab === name));
+    Object.entries(panels).forEach(([key, el]) => {
+      if (el) el.classList.toggle('is-active', key === name);
+    });
+    if (name === 'data') {
+      document.dispatchEvent(new CustomEvent('settings-data-shown'));
+    }
+  }
+
+  tabs.forEach(t => {
+    t.addEventListener('click', () => setTab(t.dataset.tab));
+  });
+
+  // ---------- Appearance logic (unchanged) ----------
+
   function syncInputs(config) {
     if (labNameInput)     labNameInput.value = config.labName;
     if (accentColorInput) accentColorInput.value = config.accentColor;
@@ -27,7 +54,6 @@ export function initSettings({ onClose } = {}) {
     if (quoteInput)       quoteInput.value = config.quote;
     if (themeLabel)       themeLabel.textContent = config.theme === 'dark' ? 'Dark' : 'Light';
 
-    // Text input: show the theme-resolved color if sentinel
     if (textColorInput) {
       const isSentinel = !config.textColor || config.textColor.toLowerCase() === '#ffffff';
       const theme = config.theme || 'light';
@@ -46,11 +72,10 @@ export function initSettings({ onClose } = {}) {
       saveConfig({ theme: next });
       applyConfigToDOM(getConfig());
       if (themeLabel) themeLabel.textContent = next === 'dark' ? 'Dark' : 'Light';
-      syncInputs(getConfig()); // refresh color pickers for new theme-resolved sentinels
+      syncInputs(getConfig());
     });
   }
 
-  // "Auto" — reset text color to theme default
   if (resetTextBtn) {
     resetTextBtn.addEventListener('click', () => {
       saveConfig({ textColor: '#ffffff' });
@@ -61,7 +86,6 @@ export function initSettings({ onClose } = {}) {
 
   applyBtn.addEventListener('click', () => {
     const cfg = getConfig();
-    // Detect "user didn't change the color picker" → keep sentinel
     const isTextSameAsResolved = (() => {
       const resolved = (cfg.theme === 'dark') ? '#ffffff' : '#000000';
       return textColorInput.value.toLowerCase() === resolved;
